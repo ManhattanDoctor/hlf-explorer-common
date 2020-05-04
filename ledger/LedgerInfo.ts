@@ -1,9 +1,7 @@
 import { LedgerBlock } from './LedgerBlock';
 import { Exclude, Transform } from 'class-transformer';
-
 import { TransformUtil } from '@ts-core/common/util';
 import { LedgerBlocksLast } from './LedgerBlocksLast';
-import { PaginableDataSourceMapCollection } from '@ts-core/common/map/dataSource';
 import { LedgerBlockTransactionsLast } from './LedgerBlockTransactionsLast';
 import * as _ from 'lodash';
 
@@ -21,10 +19,6 @@ export class LedgerInfo {
         return item;
     }
 
-    public static fromClass(item: LedgerInfo): any {
-        return TransformUtil.fromClass(item);
-    }
-
     // --------------------------------------------------------------------------
     //
     //  Properties
@@ -34,8 +28,8 @@ export class LedgerInfo {
     public id: number;
     public name: string;
 
-    @Transform(item => item.collection.map(item => LedgerBlock.fromClass(item)), { toPlainOnly: true })
-    @Transform(items => new LedgerBlocksLast(items.map(item => LedgerBlock.toClass(item))), { toClassOnly: true })
+    @Transform(item => TransformUtil.fromClassMany(item.collection), { toPlainOnly: true })
+    @Transform(items => new LedgerBlocksLast(TransformUtil.toClassMany(LedgerBlock, items)), { toClassOnly: true })
     public blocksLast: LedgerBlocksLast;
 
     @Exclude()

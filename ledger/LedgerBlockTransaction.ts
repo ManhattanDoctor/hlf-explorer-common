@@ -1,26 +1,12 @@
 import * as _ from 'lodash';
-import { Exclude, Type } from 'class-transformer';
-import { TransformUtil } from '@ts-core/common/util';
-import { ITransportFabricBlock, ITransportFabricTransaction } from '@ts-core/blockchain-fabric/transport/block';
+import { Type } from 'class-transformer';
+import { ITransportFabricTransaction } from '@ts-core/blockchain-fabric/transport/block';
 import { ITransportFabricRequestPayload } from '@ts-core/blockchain-fabric/transport/TransportFabricRequestPayload';
 import { ITransportFabricResponsePayload } from '@ts-core/blockchain-fabric/transport/TransportFabricResponsePayload';
 import { FabricTransactionValidationCode } from '@ts-core/blockchain-fabric/api';
 import { ITransportFabricTransactionChaincode } from '@ts-core/blockchain-fabric/transport/block';
 
 export class LedgerBlockTransaction implements ITransportFabricTransaction {
-    // --------------------------------------------------------------------------
-    //
-    //  Static Methods
-    //
-    // --------------------------------------------------------------------------
-
-    public static fromClass(item: LedgerBlockTransaction): any {
-        return TransformUtil.fromClass(item);
-    }
-    public static toClass(item: any): LedgerBlockTransaction {
-        return TransformUtil.toClass(LedgerBlockTransaction, item);
-    }
-
     // --------------------------------------------------------------------------
     //
     //  Propertes
