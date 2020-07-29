@@ -1,6 +1,4 @@
 import { MapCollection } from '@ts-core/common/map';
-import { LedgerBlock } from './LedgerBlock';
-import { Exclude } from 'class-transformer';
 import * as _ from 'lodash';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 

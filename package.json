@@ -6,8 +6,8 @@
   "author": "Renat Gubaev",
   "license": "ISC",
   "peerDependencies": {
-    "@ts-core/blockchain-fabric": "^1.0.42",
-    "@ts-core/common": "^1.0.94"
+    "@ts-core/blockchain-fabric": "^1.0.66",
+    "@ts-core/common": "^1.0.104"
   },
   "devDependencies": {}
 }

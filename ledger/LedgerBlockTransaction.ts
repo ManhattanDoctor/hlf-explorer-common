@@ -1,6 +1,6 @@
 import * as _ from 'lodash';
 import { Type } from 'class-transformer';
-import { ITransportFabricTransaction } from '@ts-core/blockchain-fabric/transport/block';
+import { ITransportFabricTransaction } from '@ts-core/blockchain-fabric/transport/block/ITransportFabricTransaction';
 import { ITransportFabricRequestPayload } from '@ts-core/blockchain-fabric/transport/TransportFabricRequestPayload';
 import { ITransportFabricResponsePayload } from '@ts-core/blockchain-fabric/transport/TransportFabricResponsePayload';
 import { FabricTransactionValidationCode } from '@ts-core/blockchain-fabric/api';
