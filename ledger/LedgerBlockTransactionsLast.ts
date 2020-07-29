@@ -18,7 +18,7 @@ export class LedgerBlockTransactionsLast extends MapCollection<LedgerBlockTransa
     // --------------------------------------------------------------------------
 
     constructor(items?: Array<LedgerBlockTransaction>) {
-        super('id', LedgerBlockTransactionsLast.MAX_LENGTH);
+        super('hash', LedgerBlockTransactionsLast.MAX_LENGTH);
 
         if (!_.isEmpty(items)) {
             this.addItems(items);
