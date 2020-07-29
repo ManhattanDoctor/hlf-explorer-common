@@ -1,8 +1,8 @@
 import { MapCollection } from '@ts-core/common/map';
 import * as _ from 'lodash';
-import { LedgerBlockTransaction } from './LedgerBlockTransaction';
+import { LedgerBlockEvent } from './LedgerBlockEvent';
 
-export class LedgerBlockTransactionsLast extends MapCollection<LedgerBlockTransaction> {
+export class LedgerBlockEventsLast extends MapCollection<LedgerBlockEvent> {
     // --------------------------------------------------------------------------
     //
     //  Constants
@@ -17,8 +17,8 @@ export class LedgerBlockTransactionsLast extends MapCollection<LedgerBlockTransa
     //
     // --------------------------------------------------------------------------
 
-    constructor(items?: Array<LedgerBlockTransaction>) {
-        super('id', LedgerBlockTransactionsLast.MAX_LENGTH);
+    constructor(items?: Array<LedgerBlockEvent>) {
+        super('id', LedgerBlockEventsLast.MAX_LENGTH);
 
         if (!_.isEmpty(items)) {
             this.addItems(items);
@@ -31,7 +31,7 @@ export class LedgerBlockTransactionsLast extends MapCollection<LedgerBlockTransa
     //
     // --------------------------------------------------------------------------
 
-    public add(item: LedgerBlockTransaction, isFirst: boolean): LedgerBlockTransaction {
+    public add(item: LedgerBlockEvent, isFirst: boolean): LedgerBlockEvent {
         item = super.add(item, isFirst);
         if (!_.isNil(item)) {
             this.sort();
@@ -49,7 +49,7 @@ export class LedgerBlockTransactionsLast extends MapCollection<LedgerBlockTransa
     //
     // --------------------------------------------------------------------------
 
-    private sortFunction = (first: LedgerBlockTransaction, second: LedgerBlockTransaction): number => {
+    private sortFunction = (first: LedgerBlockEvent, second: LedgerBlockEvent): number => {
         return first.createdDate.getTime() > second.createdDate.getTime() ? -1 : 1;
     };
 }
