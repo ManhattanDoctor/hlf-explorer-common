@@ -10,6 +10,7 @@ export class LedgerBlockEvent<T = any> implements ITransportFabricEvent<T> {
     // --------------------------------------------------------------------------
 
     public id: number;
+    public uid: string;
 
     public name: string;
     public channel: string;
@@ -21,7 +22,4 @@ export class LedgerBlockEvent<T = any> implements ITransportFabricEvent<T> {
     public createdDate: Date;
 
     public data?: T;
-
-    public blockId: number;
-    public ledgerId: number;
 }

@@ -1,3 +1,3 @@
 export interface ILedgerBlockGetRequest {
-    numberOrHash: number | string;
+    hashOrNumber: string | number;
 }

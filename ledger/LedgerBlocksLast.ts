@@ -20,7 +20,7 @@ export class LedgerBlocksLast extends MapCollection<LedgerBlock> {
     // --------------------------------------------------------------------------
 
     constructor(items?: Array<LedgerBlock>) {
-        super('hash', LedgerBlocksLast.MAX_LENGTH);
+        super('uid', LedgerBlocksLast.MAX_LENGTH);
 
         if (!_.isEmpty(items)) {
             this.addItems(items);

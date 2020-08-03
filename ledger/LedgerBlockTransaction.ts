@@ -14,6 +14,8 @@ export class LedgerBlockTransaction implements ITransportFabricTransaction {
     // --------------------------------------------------------------------------
 
     public id: number;
+    public uid: string;
+
     public hash: string;
     public channel: string;
     public blockNumber: number;
@@ -32,7 +34,4 @@ export class LedgerBlockTransaction implements ITransportFabricTransaction {
     public chaincode: ITransportFabricTransactionChaincode;
 
     public validationCode: FabricTransactionValidationCode;
-
-    public blockId: number;
-    public ledgerId: number;
 }

@@ -18,7 +18,7 @@ export class LedgerBlockEventsLast extends MapCollection<LedgerBlockEvent> {
     // --------------------------------------------------------------------------
 
     constructor(items?: Array<LedgerBlockEvent>) {
-        super('transactionHash', LedgerBlockEventsLast.MAX_LENGTH);
+        super('uid', LedgerBlockEventsLast.MAX_LENGTH);
 
         if (!_.isEmpty(items)) {
             this.addItems(items);

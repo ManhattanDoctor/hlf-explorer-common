@@ -1,5 +1,5 @@
 import { Block } from 'fabric-client';
-import { Exclude, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 import { LedgerBlockEvent } from './LedgerBlockEvent';
 
@@ -10,8 +10,9 @@ export class LedgerBlock {
     //
     // --------------------------------------------------------------------------
 
-    @Exclude()
     public id: number;
+    public uid: string;
+
     public hash: string;
     public number: number;
     public rawData: Block;
@@ -24,6 +25,4 @@ export class LedgerBlock {
 
     @Type(() => LedgerBlockTransaction)
     public transactions: Array<LedgerBlockTransaction>;
-
-    public ledgerId: number;
 }
