@@ -1,13 +1,14 @@
 {
-  "name": "@hlf-explorer/common",
-  "version": "1.0.0",
-  "description": "",
-  "main": "",
-  "author": "Renat Gubaev",
-  "license": "ISC",
-  "peerDependencies": {
-    "@ts-core/blockchain-fabric": "^1.0.66",
-    "@ts-core/common": "^1.0.104"
-  },
-  "devDependencies": {}
+    "name": "@hlf-explorer/common",
+    "version": "1.0.0",
+    "description": "",
+    "main": "",
+    "author": "Renat Gubaev",
+    "license": "ISC",
+    "peerDependencies": {
+        "@ts-core/blockchain-fabric": "^1.0.66",
+        "@ts-core/common": "^1.0.104",
+        "socket.io-client": "2.2.0"
+    },
+    "devDependencies": {}
 }
