@@ -15,7 +15,7 @@ export class LedgerInfo {
 
     public static toClass(value: any): LedgerInfo {
         let item = TransformUtil.toClass(LedgerInfo, value);
-        item.blockLast = item.blocksLast.getLast();
+        item.blockLast = item.blocksLast.getFirst();
         item.eventsLast = new LedgerBlockEventsLast(_.flatten(item.blocksLast.collection.map(item => item.events)));
         item.transactionsLast = new LedgerBlockTransactionsLast(_.flatten(item.blocksLast.collection.map(item => item.transactions)));
         return item;
