@@ -1,5 +1,5 @@
-import { LedgerBlock, LedgerBlockTransaction } from '../../ledger';
+import { LedgerBlock, LedgerBlockTransaction, LedgerBlockEvent } from '../../ledger';
 
 export interface ILedgerSearchResponse {
-    value: LedgerBlock | LedgerBlockTransaction;
+    value: LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent;
 }
