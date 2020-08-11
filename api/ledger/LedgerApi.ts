@@ -4,14 +4,14 @@ import { LedgerBlock, LedgerInfo, LedgerBlockEvent, LedgerBlockTransaction } fro
 import { Loadable, LoadableStatus, LoadableEvent } from '@ts-core/common/Loadable';
 import { ILedgerInfoGetResponse, ILedgerInfoGetRequest } from './info';
 import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
-import { ILedgerBlockEventGetResponse } from './event';
+import { ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest } from './event';
 import { IPagination, Paginable } from '@ts-core/common/dto';
 import * as io from 'socket.io-client';
 // import { SocketIOClient } from 'socket.io-client';
 import { ObservableData } from '@ts-core/common/observer';
 import { ExtendedError } from '@ts-core/common/error';
 import { TransformUtil, ObjectUtil, UrlUtil } from '@ts-core/common/util';
-import { ILedgerBlockTransactionGetResponse } from './transaction';
+import { ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest } from './transaction';
 import { LedgerSocketEvent, LEDGER_SOCKET_NAMESPACE } from './LedgerSocketEvent';
 import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import * as _ from 'lodash';
@@ -19,6 +19,7 @@ import { TransportCommandFabric, TransportCommandFabricAsync } from '@ts-core/bl
 import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport';
 import { Transport } from '@ts-core/common/transport';
 import { ILedgerCommandRequest } from './ILedgerCommandRequest';
+import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 
 export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     // --------------------------------------------------------------------------
@@ -71,8 +72,9 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
 
     protected createCommandRequest<U, V = any>(
         command: TransportCommandFabric<U> | TransportCommandFabricAsync<U, V>,
-        options?: ITransportFabricCommandOptions
-    ): any {
+        options?: ITransportFabricCommandOptions,
+        ledgerId?: number
+    ): ILedgerCommandRequest {
         if (_.isNil(options)) {
             options = {} as any;
         }
@@ -84,8 +86,24 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         return {
             command: TransformUtil.fromClass(command),
             isAsync: Transport.isCommandAsync(command),
+            ledgerId: this.getLedgerId(ledgerId),
             options
         };
+    }
+
+    protected checkPaginable<U>(data: Paginable<U>, ledgerId: number): void {
+        if (_.isNil(data)) {
+            return;
+        }
+
+        if (_.isNil(data.conditions)) {
+            data.conditions = {};
+        }
+        Object.assign(data.conditions, { ledgerId: this.getLedgerId(ledgerId) });
+    }
+
+    protected getLedgerId(ledgerId?: number): number {
+        return !_.isNil(ledgerId) ? ledgerId : this.settings.defaultLedgerId;
     }
 
     // --------------------------------------------------------------------------
@@ -94,17 +112,20 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     //
     // --------------------------------------------------------------------------
 
-    public commandSend<U>(command: TransportCommandFabric<U>, options?: ITransportFabricCommandOptions): void {
+    public commandSend<U>(command: TransportCommandFabric<U>, options?: ITransportFabricCommandOptions, ledgerId?: number): void {
         this.http.send(
-            new TransportHttpCommand<ILedgerCommandRequest<U>>(`api/ledger/command`, { data: this.createCommandRequest(command, options), method: 'post' })
+            new TransportHttpCommand<ILedgerCommandRequest<U>>(`api/ledger/command`, {
+                data: this.createCommandRequest(command, options, ledgerId),
+                method: 'post'
+            })
         );
     }
 
-    public async commandSendListen<U, V>(command: TransportCommandFabricAsync<U, V>, options?: ITransportFabricCommandOptions): Promise<V> {
+    public async commandSendListen<U, V>(command: TransportCommandFabricAsync<U, V>, options?: ITransportFabricCommandOptions, ledgerId?: number): Promise<V> {
         command.response(
             await this.http.sendListen(
                 new TransportHttpCommandAsync<V, ILedgerCommandRequest<U>>(`api/ledger/command`, {
-                    data: this.createCommandRequest(command, options),
+                    data: this.createCommandRequest(command, options, ledgerId),
                     method: 'post'
                 })
             )
@@ -118,18 +139,20 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     //
     // --------------------------------------------------------------------------
 
-    public async search(query: string): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
+    public async search(query: string, ledgerId?: number): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerSearchResponse>('api/ledger/search', { data: { query } })
+            new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>('api/ledger/search', {
+                data: { query, ledgerId: this.getLedgerId(ledgerId) }
+            })
         );
 
         let classType = null;
-        if (ObjectUtil.instanceOf(item.value, ['number', 'rawData'])) {
+        if (LedgerBlock.instanceOf(item.value)) {
             classType = LedgerBlock;
-        } else if (ObjectUtil.instanceOf(item.value, ['requestId', 'requestName'])) {
-            classType = LedgerBlockTransaction;
-        } else if (ObjectUtil.instanceOf(item.value, ['name', 'transactionHash'])) {
+        } else if (LedgerBlockEvent.instanceOf(item.value)) {
             classType = LedgerBlockEvent;
+        } else if (LedgerBlockTransaction.instanceOf(item.value)) {
+            classType = LedgerBlockTransaction;
         } else {
             throw new ExtendedError(`Unknown response type`);
         }
@@ -152,16 +175,17 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     }
 
     public async getBlock(hashOrNumber: number | string, ledgerId?: number): Promise<LedgerBlock> {
-        if (_.isNaN(ledgerId)) {
-            ledgerId = this.settings.defaultLedgerId;
-        }
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(`api/ledger/block`, { data: { hashOrNumber, ledgerId } })
+            new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(`api/ledger/block`, {
+                data: { hashOrNumber, ledgerId: this.getLedgerId(ledgerId) }
+            })
         );
         return TransformUtil.toClass(LedgerBlock, item.value);
     }
 
-    public async getBlockList(data?: Paginable<LedgerBlock>): Promise<IPagination<LedgerBlock>> {
+    public async getBlockList(data?: Paginable<LedgerBlock>, ledgerId?: number): Promise<IPagination<LedgerBlock>> {
+        this.checkPaginable(data, ledgerId);
+
         let items = await this.http.sendListen(
             new TransportHttpCommandAsync<IPagination<LedgerBlock>>(`api/ledger/blocks`, { data })
         );
@@ -169,12 +193,18 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         return items;
     }
 
-    public async getTransaction(hash: string): Promise<LedgerBlockTransaction> {
-        let item = await this.http.sendListen(new TransportHttpCommandAsync<ILedgerBlockTransactionGetResponse>(`api/ledger/transaction?hash=${hash}`));
+    public async getTransaction(hash: string, ledgerId?: number): Promise<LedgerBlockTransaction> {
+        let item = await this.http.sendListen(
+            new TransportHttpCommandAsync<ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest>(`api/ledger/transaction`, {
+                data: { hash, ledgerId: this.getLedgerId(ledgerId) }
+            })
+        );
         return TransformUtil.toClass(LedgerBlockTransaction, item.value);
     }
 
-    public async getTransactionList(data?: Paginable<LedgerBlockTransaction>): Promise<IPagination<LedgerBlockTransaction>> {
+    public async getTransactionList(data?: Paginable<LedgerBlockTransaction>, ledgerId?: number): Promise<IPagination<LedgerBlockTransaction>> {
+        this.checkPaginable(data, ledgerId);
+
         let items = await this.http.sendListen(
             new TransportHttpCommandAsync<IPagination<LedgerBlockTransaction>>(`api/ledger/transactions`, { data })
         );
@@ -182,14 +212,20 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         return items;
     }
 
-    public async getEvent(uid: string): Promise<LedgerBlockEvent> {
-        let item = await this.http.sendListen(new TransportHttpCommandAsync<ILedgerBlockEventGetResponse>(`api/ledger/event?uid=${uid}`));
+    public async getEvent(uid: string, ledgerId?: number): Promise<LedgerBlockEvent> {
+        let item = await this.http.sendListen(
+            new TransportHttpCommandAsync<ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest>(`api/ledger/event`, {
+                data: { uid, ledgerId: this.getLedgerId(ledgerId) }
+            })
+        );
         return TransformUtil.toClass(LedgerBlockEvent, item.value);
     }
 
-    public async getEventList(data?: Paginable<LedgerBlockEvent>): Promise<IPagination<LedgerBlockEvent>> {
+    public async getEventList(data?: Paginable<LedgerBlockEvent>, ledgerId?: number): Promise<IPagination<LedgerBlockEvent>> {
+        this.checkPaginable(data, ledgerId);
+
         let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlockEvent>>(`ledger/events`, { data })
+            new TransportHttpCommandAsync<IPagination<LedgerBlockEvent>>(`api/ledger/events`, { data })
         );
         items.items = TransformUtil.toClassMany(LedgerBlockEvent, items.items);
         return items;
