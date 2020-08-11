@@ -2,8 +2,19 @@ import { Block } from 'fabric-client';
 import { Type } from 'class-transformer';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 import { LedgerBlockEvent } from './LedgerBlockEvent';
+import { ObjectUtil } from '@ts-core/common/util';
 
 export class LedgerBlock {
+    // --------------------------------------------------------------------------
+    //
+    //  Static Methods
+    //
+    // --------------------------------------------------------------------------
+
+    public static instanceOf(data: any): data is LedgerBlock {
+        return ObjectUtil.instanceOf(data, ['number', 'hash', 'rawData']);
+    }
+
     // --------------------------------------------------------------------------
     //
     //  Propertes
