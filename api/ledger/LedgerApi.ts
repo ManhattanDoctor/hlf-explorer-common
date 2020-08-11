@@ -139,26 +139,6 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     //
     // --------------------------------------------------------------------------
 
-    public async search(query: string, ledgerId?: number): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
-        let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>('api/ledger/search', {
-                data: { query, ledgerId: this.getLedgerId(ledgerId) }
-            })
-        );
-
-        let classType = null;
-        if (LedgerBlock.instanceOf(item.value)) {
-            classType = LedgerBlock;
-        } else if (LedgerBlockEvent.instanceOf(item.value)) {
-            classType = LedgerBlockEvent;
-        } else if (LedgerBlockTransaction.instanceOf(item.value)) {
-            classType = LedgerBlockTransaction;
-        } else {
-            throw new ExtendedError(`Unknown response type`);
-        }
-        return TransformUtil.toClass(classType, item.value);
-    }
-
     public async getInfo(nameOrId: number | string): Promise<LedgerInfo> {
         let item = await this.http.sendListen(
             new TransportHttpCommandAsync<ILedgerInfoGetResponse, ILedgerInfoGetRequest>(`api/ledger/info`, { data: { nameOrId } })
@@ -231,6 +211,26 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         return items;
     }
 
+    public async search(query: string, ledgerId?: number): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
+        let item = await this.http.sendListen(
+            new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>('api/ledger/search', {
+                data: { query, ledgerId: this.getLedgerId(ledgerId) }
+            })
+        );
+
+        let classType = null;
+        if (LedgerBlock.instanceOf(item.value)) {
+            classType = LedgerBlock;
+        } else if (LedgerBlockEvent.instanceOf(item.value)) {
+            classType = LedgerBlockEvent;
+        } else if (LedgerBlockTransaction.instanceOf(item.value)) {
+            classType = LedgerBlockTransaction;
+        } else {
+            throw new ExtendedError(`Unknown response type`);
+        }
+        return TransformUtil.toClass(classType, item.value);
+    }
+    
     // --------------------------------------------------------------------------
     //
     //  Socket Methods
