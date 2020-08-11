@@ -3,7 +3,7 @@ import { ILogger } from '@ts-core/common/logger';
 import { LedgerBlock, LedgerInfo, LedgerBlockEvent, LedgerBlockTransaction } from '../../ledger';
 import { Loadable, LoadableStatus, LoadableEvent } from '@ts-core/common/Loadable';
 import { ILedgerInfoGetResponse } from './info';
-import { ILedgerBlockGetResponse } from './block';
+import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
 import { ILedgerBlockEventGetResponse } from './event';
 import { IPagination, Paginable } from '@ts-core/common/dto';
 import * as io from 'socket.io-client';
@@ -23,8 +23,9 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     //
     // --------------------------------------------------------------------------
 
+    public defaultLedgerId: number;
+    
     protected error: ExtendedError;
-
     protected _http: TransportHttp;
     protected _socket: any;
 
@@ -68,7 +69,7 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
 
     // --------------------------------------------------------------------------
     //
-    //  Public Methods
+    //  Api Methods
     //
     // --------------------------------------------------------------------------
 
@@ -103,8 +104,13 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         return items;
     }
 
-    public async getBlock(hashOrNumber: number | string): Promise<LedgerBlock> {
-        let item = await this.http.sendListen(new TransportHttpCommandAsync<ILedgerBlockGetResponse>(`api/ledger/block?hashOrNumber=${hashOrNumber}`));
+    public async getBlock(hashOrNumber: number | string, ledgerId?: number): Promise<LedgerBlock> {
+        if (_.isNaN(ledgerId)) {
+            ledgerId = this.defaultLedgerId;
+        }
+        let item = await this.http.sendListen(
+            new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(`api/ledger/block`, { data: { hashOrNumber, ledgerId } })
+        );
         return TransformUtil.toClass(LedgerBlock, item.value);
     }
 
@@ -141,6 +147,12 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         items.items = TransformUtil.toClassMany(LedgerBlockEvent, items.items);
         return items;
     }
+
+    // --------------------------------------------------------------------------
+    //
+    //  Socket Methods
+    //
+    // --------------------------------------------------------------------------
 
     public connect(): void {
         if (this.isLoaded || this.isLoading) {

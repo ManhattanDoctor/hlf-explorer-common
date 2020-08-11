@@ -1,3 +1,3 @@
 export interface ILedgerInfoGetRequest {
-    nameOrId: string | number;
+    nameOrId: number | string;
 }
