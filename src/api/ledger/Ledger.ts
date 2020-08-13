@@ -1,36 +1,33 @@
 import { TransportHttp, TransportHttpCommandAsync, ITransportHttpSettings, TransportHttpCommand } from '@ts-core/common/transport/http';
 import { ILogger } from '@ts-core/common/logger';
-import { LedgerBlock, LedgerInfo, LedgerBlockEvent, LedgerBlockTransaction } from '../../ledger';
+import { LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../../ledger';
 import { Loadable, LoadableStatus, LoadableEvent } from '@ts-core/common/Loadable';
 import { ILedgerInfoGetResponse, ILedgerInfoGetRequest } from './info';
 import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
 import { ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest } from './event';
 import { IPagination, Paginable } from '@ts-core/common/dto';
-import * as io from 'socket.io-client';
-import { ObservableData } from '@ts-core/common/observer';
 import { ExtendedError } from '@ts-core/common/error';
-import { TransformUtil, UrlUtil } from '@ts-core/common/util';
+import { TransformUtil } from '@ts-core/common/util';
 import { ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest } from './transaction';
-import { LedgerSocketEvent, LEDGER_SOCKET_NAMESPACE } from './LedgerSocketEvent';
 import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import * as _ from 'lodash';
 import { TransportCommandFabric } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabric';
 import { TransportCommandFabricAsync } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabricAsync';
 import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport/ITransportFabricCommandOptions';
-import { Transport } from '@ts-core/common/transport';
+import { Transport, ITransportEvent } from '@ts-core/common/transport';
 import { ILedgerCommandRequest } from './ILedgerCommandRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
+import { Destroyable } from '@ts-core/common/Destroyable';
+import { LedgerSocket } from './LedgerSocket';
 
-export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
+export class Ledger extends Destroyable {
     // --------------------------------------------------------------------------
     //
     //  Properties
     //
     // --------------------------------------------------------------------------
 
-    protected error: ExtendedError;
     protected _http: TransportHttp;
-    protected _socket: any;
 
     // --------------------------------------------------------------------------
     //
@@ -48,27 +45,6 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     // 	Protected Methods
     //
     //--------------------------------------------------------------------------
-
-    protected commitStatusChangedProperties(oldStatus: LoadableStatus, newStatus: LoadableStatus): void {
-        super.commitStatusChangedProperties(oldStatus, newStatus);
-
-        switch (newStatus) {
-            case LoadableStatus.LOADING:
-                this.observer.next(new ObservableData(LoadableEvent.STARTED));
-                break;
-            case LoadableStatus.LOADED:
-                this.observer.next(new ObservableData(LoadableEvent.COMPLETE));
-                break;
-            case LoadableStatus.ERROR:
-            case LoadableStatus.NOT_LOADED:
-                this.observer.next(new ObservableData(LoadableEvent.ERROR, null, this.error));
-                break;
-        }
-
-        if (oldStatus === LoadableStatus.LOADING) {
-            this.observer.next(new ObservableData(LoadableEvent.FINISHED));
-        }
-    }
 
     protected createCommandRequest<U, V = any>(
         command: TransportCommandFabric<U> | TransportCommandFabricAsync<U, V>,
@@ -231,148 +207,9 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         return TransformUtil.toClass(classType, item.value);
     }
 
-    // --------------------------------------------------------------------------
-    //
-    //  Socket Methods
-    //
-    // --------------------------------------------------------------------------
-
-    public connect(): void {
-        if (this.isLoaded || this.isLoading) {
-            return;
-        }
-        this.socket = io.connect(`${UrlUtil.parseUrl(this.url)}${LEDGER_SOCKET_NAMESPACE}`, { reconnectionAttempts: 3 });
-        this.status = LoadableStatus.LOADING;
-    }
-
-    public disconnect(): void {
-        if (this.status === LoadableStatus.NOT_LOADED || this.isError) {
-            return;
-        }
-        this.socket = null;
-        this.status = LoadableStatus.NOT_LOADED;
-    }
-
     public destroy(): void {
-        super.destroy();
-        this.disconnect();
-
         this._http.destroy();
         this._http = null;
-    }
-
-    //--------------------------------------------------------------------------
-    //
-    // 	Socket Event Handlers
-    //
-    //--------------------------------------------------------------------------
-
-    private proxyExceptionHandler = (error: ExtendedError): void => {
-        this.exceptionHandler(error);
-    };
-
-    private proxyLedgerListHandler = (items: Array<LedgerInfo>): void => {
-        this.ledgerListHandler(items.map(item => LedgerInfo.toClass(item)));
-    };
-
-    private proxyLedgerBlockParsed(ledger: Partial<LedgerInfo>): void {
-        if (!_.isNil(ledger.blockLast)) {
-            ledger.blockLast = TransformUtil.toClass(LedgerBlock, ledger.blockLast);
-        }
-        this.ledgerBlockParsed(ledger);
-    }
-
-    private proxyLedgerUpdatedHandler = (ledger: Partial<LedgerInfo>): void => {
-        if (!_.isNil(ledger.blockLast)) {
-            ledger.blockLast = TransformUtil.toClass(LedgerBlock, ledger.blockLast);
-        }
-        this.ledgerUpdatedHandler(ledger);
-    };
-
-    private proxySocketConnectedHandler = (event: any): void => {
-        this.socketConnectedHandler(event);
-    };
-
-    private proxySocketErrorHandler = (event: any): void => {
-        this.socketErrorHandler(event);
-    };
-
-    private proxySocketDisconnectedHandler = (event: any): void => {
-        this.socketDisconnectedHandler(event);
-    };
-
-    //--------------------------------------------------------------------------
-    //
-    // 	Socket Event Handlers
-    //
-    //--------------------------------------------------------------------------
-
-    protected exceptionHandler(error: ExtendedError): void {
-        this.observer.next(new ObservableData(LedgerSocketEvent.EXCEPTION, ExtendedError.create(error)));
-    }
-
-    protected ledgerListHandler(items: Array<LedgerInfo>): void {
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST, items));
-    }
-
-    protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_BLOCK_PARSED, ledger));
-    }
-
-    protected ledgerUpdatedHandler(ledger: Partial<LedgerInfo>): void {
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
-    }
-
-    protected socketErrorHandler(event: any): void {
-        this.error = new ExtendedError(event);
-        this.status = LoadableStatus.ERROR;
-    }
-
-    protected socketConnectedHandler(event: any): void {
-        this.status = LoadableStatus.LOADED;
-    }
-
-    protected socketDisconnectedHandler(event: any): void {
-        this.status = LoadableStatus.ERROR;
-    }
-
-    //--------------------------------------------------------------------------
-    //
-    // 	Private Properties
-    //
-    //--------------------------------------------------------------------------
-
-    protected get socket(): any {
-        return this._socket;
-    }
-
-    protected set socket(value: any) {
-        if (value === this._socket) {
-            return;
-        }
-
-        if (this._socket) {
-            this._socket.removeEventListener(LedgerSocketEvent.LEDGER_LIST, this.proxyLedgerListHandler);
-            this._socket.removeEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
-            this._socket.removeEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
-            this._socket.removeEventListener(LedgerSocketEvent.EXCEPTION, this.proxyExceptionHandler);
-            this._socket.removeEventListener('error', this.proxySocketErrorHandler);
-            this._socket.removeEventListener('connect', this.proxySocketConnectedHandler);
-            this._socket.removeEventListener('disconnect', this.proxySocketDisconnectedHandler);
-            this._socket.disconnect();
-        }
-
-        this._socket = value;
-
-        if (this._socket) {
-            this._socket.addEventListener(LedgerSocketEvent.LEDGER_LIST, this.proxyLedgerListHandler);
-            this._socket.addEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
-            this._socket.addEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
-            this._socket.addEventListener(LedgerSocketEvent.EXCEPTION, this.proxyExceptionHandler);
-            this._socket.addEventListener('error', this.proxySocketErrorHandler);
-            this._socket.addEventListener('connect', this.proxySocketConnectedHandler);
-            this._socket.addEventListener('disconnect', this.proxySocketDisconnectedHandler);
-        }
     }
 
     //--------------------------------------------------------------------------
@@ -391,11 +228,11 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         }
     }
 
-    public get settings(): ILedgerApiSettings {
+    public get settings(): ILedgerSettings {
         return !_.isNil(this.http) ? this.http.settings : null;
     }
 
-    public set settings(value: ILedgerApiSettings) {
+    public set settings(value: ILedgerSettings) {
         if (!_.isNil(this.http)) {
             this.http.settings = value;
         }
@@ -406,7 +243,7 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
     }
 }
 
-export interface ILedgerApiSettings extends ITransportHttpSettings {
+export interface ILedgerSettings extends ITransportHttpSettings {
     sign?: <U, V = any>(
         command: TransportCommandFabric<U> | TransportCommandFabricAsync<U, V>,
         options: ITransportFabricCommandOptions
@@ -414,3 +251,10 @@ export interface ILedgerApiSettings extends ITransportHttpSettings {
 
     defaultLedgerId?: number;
 }
+
+export interface LedgerApiLedgerEvent<T = any> {
+    id: number;
+    event: ITransportEvent<T>;
+}
+
+export type LedgerApiEventData = Partial<LedgerInfo> | Array<LedgerInfo> | LedgerApiLedgerEvent | ExtendedError;

@@ -1,9 +1,0 @@
-export const LEDGER_SOCKET_NAMESPACE = `ledger`;
-
-export enum LedgerSocketEvent {
-    EXCEPTION = 'EXCEPTION',
-
-    LEDGER_LIST = 'LEDGER_LIST',
-    LEDGER_UPDATED = 'LEDGER_UPDATED',
-    LEDGER_BLOCK_PARSED = 'LEDGER_BLOCK_PARSED'
-}
