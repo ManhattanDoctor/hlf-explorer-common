@@ -1,4 +1,4 @@
-import { LedgerBlockEvent } from '../../../ledger';
+import { LedgerBlockEvent } from '../../ledger';
 
 export interface ILedgerBlockEventGetResponse {
     value: LedgerBlockEvent;
