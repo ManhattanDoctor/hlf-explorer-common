@@ -1,4 +1,4 @@
 export interface ILedgerBlockGetRequest {
-    ledgerId: number; 
+    ledgerId: number;
     hashOrNumber: string | number;
 }

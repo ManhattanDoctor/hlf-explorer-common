@@ -7,16 +7,16 @@ import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
 import { ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest } from './event';
 import { IPagination, Paginable } from '@ts-core/common/dto';
 import * as io from 'socket.io-client';
-// import { SocketIOClient } from 'socket.io-client';
 import { ObservableData } from '@ts-core/common/observer';
 import { ExtendedError } from '@ts-core/common/error';
-import { TransformUtil, ObjectUtil, UrlUtil } from '@ts-core/common/util';
+import { TransformUtil, UrlUtil } from '@ts-core/common/util';
 import { ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest } from './transaction';
 import { LedgerSocketEvent, LEDGER_SOCKET_NAMESPACE } from './LedgerSocketEvent';
 import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import * as _ from 'lodash';
-import { TransportCommandFabric, TransportCommandFabricAsync } from '@ts-core/blockchain-fabric/transport/command';
-import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport';
+import { TransportCommandFabric } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabric';
+import { TransportCommandFabricAsync } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabricAsync';
+import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport/ITransportFabricCommandOptions';
 import { Transport } from '@ts-core/common/transport';
 import { ILedgerCommandRequest } from './ILedgerCommandRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
@@ -230,7 +230,7 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         }
         return TransformUtil.toClass(classType, item.value);
     }
-    
+
     // --------------------------------------------------------------------------
     //
     //  Socket Methods
@@ -271,8 +271,8 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         this.exceptionHandler(error);
     };
 
-    private proxyLedgersHandler = (items: Array<LedgerInfo>): void => {
-        this.ledgersHandler(items.map(item => LedgerInfo.toClass(item)));
+    private proxyLedgerListHandler = (items: Array<LedgerInfo>): void => {
+        this.ledgerListHandler(items.map(item => LedgerInfo.toClass(item)));
     };
 
     private proxyLedgerBlockParsed(ledger: Partial<LedgerInfo>): void {
@@ -311,8 +311,8 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         this.observer.next(new ObservableData(LedgerSocketEvent.EXCEPTION, ExtendedError.create(error)));
     }
 
-    protected ledgersHandler(items: Array<LedgerInfo>): void {
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGERS, items));
+    protected ledgerListHandler(items: Array<LedgerInfo>): void {
+        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST, items));
     }
 
     protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
@@ -352,7 +352,7 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         }
 
         if (this._socket) {
-            this._socket.removeEventListener(LedgerSocketEvent.LEDGERS, this.proxyLedgersHandler);
+            this._socket.removeEventListener(LedgerSocketEvent.LEDGER_LIST, this.proxyLedgerListHandler);
             this._socket.removeEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
             this._socket.removeEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
             this._socket.removeEventListener(LedgerSocketEvent.EXCEPTION, this.proxyExceptionHandler);
@@ -365,7 +365,7 @@ export class LedgerApi extends Loadable<LedgerSocketEvent, any> {
         this._socket = value;
 
         if (this._socket) {
-            this._socket.addEventListener(LedgerSocketEvent.LEDGERS, this.proxyLedgersHandler);
+            this._socket.addEventListener(LedgerSocketEvent.LEDGER_LIST, this.proxyLedgerListHandler);
             this._socket.addEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
             this._socket.addEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
             this._socket.addEventListener(LedgerSocketEvent.EXCEPTION, this.proxyExceptionHandler);

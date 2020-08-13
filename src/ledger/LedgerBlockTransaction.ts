@@ -3,8 +3,8 @@ import { Type } from 'class-transformer';
 import { ITransportFabricTransaction } from '@ts-core/blockchain-fabric/transport/block/ITransportFabricTransaction';
 import { ITransportFabricRequestPayload } from '@ts-core/blockchain-fabric/transport/TransportFabricRequestPayload';
 import { ITransportFabricResponsePayload } from '@ts-core/blockchain-fabric/transport/TransportFabricResponsePayload';
-import { FabricTransactionValidationCode } from '@ts-core/blockchain-fabric/api';
-import { ITransportFabricTransactionChaincode } from '@ts-core/blockchain-fabric/transport/block';
+import { FabricTransactionValidationCode } from '@ts-core/blockchain-fabric/api/IFabricTransaction';
+import { ITransportFabricTransactionChaincode } from '@ts-core/blockchain-fabric/transport/block/ITransportFabricTransaction';
 import { ObjectUtil } from '@ts-core/common/util';
 
 export class LedgerBlockTransaction implements ITransportFabricTransaction {
