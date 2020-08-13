@@ -1,7 +1,6 @@
 import { TransportHttp, TransportHttpCommandAsync, ITransportHttpSettings, TransportHttpCommand } from '@ts-core/common/transport/http';
 import { ILogger } from '@ts-core/common/logger';
-import { LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../../ledger';
-import { Loadable, LoadableStatus, LoadableEvent } from '@ts-core/common/Loadable';
+import { LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../ledger';
 import { ILedgerInfoGetResponse, ILedgerInfoGetRequest } from './info';
 import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
 import { ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest } from './event';
@@ -14,13 +13,12 @@ import * as _ from 'lodash';
 import { TransportCommandFabric } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabric';
 import { TransportCommandFabricAsync } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabricAsync';
 import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport/ITransportFabricCommandOptions';
-import { Transport, ITransportEvent } from '@ts-core/common/transport';
+import { Transport } from '@ts-core/common/transport';
 import { ILedgerCommandRequest } from './ILedgerCommandRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { Destroyable } from '@ts-core/common/Destroyable';
-import { LedgerSocket } from './LedgerSocket';
 
-export class Ledger extends Destroyable {
+export class LedgerApi extends Destroyable {
     // --------------------------------------------------------------------------
     //
     //  Properties
@@ -228,11 +226,11 @@ export class Ledger extends Destroyable {
         }
     }
 
-    public get settings(): ILedgerSettings {
+    public get settings(): ILedgerApiSettings {
         return !_.isNil(this.http) ? this.http.settings : null;
     }
 
-    public set settings(value: ILedgerSettings) {
+    public set settings(value: ILedgerApiSettings) {
         if (!_.isNil(this.http)) {
             this.http.settings = value;
         }
@@ -243,7 +241,7 @@ export class Ledger extends Destroyable {
     }
 }
 
-export interface ILedgerSettings extends ITransportHttpSettings {
+export interface ILedgerApiSettings extends ITransportHttpSettings {
     sign?: <U, V = any>(
         command: TransportCommandFabric<U> | TransportCommandFabricAsync<U, V>,
         options: ITransportFabricCommandOptions
@@ -251,10 +249,3 @@ export interface ILedgerSettings extends ITransportHttpSettings {
 
     defaultLedgerId?: number;
 }
-
-export interface LedgerApiLedgerEvent<T = any> {
-    id: number;
-    event: ITransportEvent<T>;
-}
-
-export type LedgerApiEventData = Partial<LedgerInfo> | Array<LedgerInfo> | LedgerApiLedgerEvent | ExtendedError;

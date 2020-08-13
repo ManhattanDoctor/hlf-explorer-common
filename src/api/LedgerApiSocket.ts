@@ -1,4 +1,4 @@
-import { LedgerBlock, LedgerInfo } from '../../ledger';
+import { LedgerBlock, LedgerInfo } from '../ledger';
 import { Loadable, LoadableStatus, LoadableEvent } from '@ts-core/common/Loadable';
 import * as io from 'socket.io-client';
 import { ObservableData } from '@ts-core/common/observer';
@@ -9,15 +9,15 @@ import { ITransportEvent } from '@ts-core/common/transport';
 import { Observable, Subject } from 'rxjs';
 import { ILogger } from '@ts-core/common/logger';
 
-export class LedgerSocket extends Loadable<LedgerSocketEvent, Partial<LedgerInfo> | Array<LedgerInfo> | LedgerSocketEventData | ExtendedError> {
+export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerInfo> | Array<LedgerInfo> | LedgerSocketEventData | ExtendedError> {
     // --------------------------------------------------------------------------
     //
     //  Properties
     //
     // --------------------------------------------------------------------------
 
-    protected _url: string;
     protected _socket: any;
+    protected _settings: any;
 
     protected error: ExtendedError;
     protected eventDispatchers: Map<string, Subject<any>>;
@@ -30,6 +30,7 @@ export class LedgerSocket extends Loadable<LedgerSocketEvent, Partial<LedgerInfo
 
     constructor(protected logger: ILogger) {
         super();
+        this._settings = { url: null, reconnectionAttempts: 3 };
         this.eventDispatchers = new Map();
     }
 
@@ -85,7 +86,7 @@ export class LedgerSocket extends Loadable<LedgerSocketEvent, Partial<LedgerInfo
         if (this.isLoaded || this.isLoading) {
             return;
         }
-        this.socket = io.connect(`${UrlUtil.parseUrl(this.url)}${LEDGER_SOCKET_NAMESPACE}`, { reconnectionAttempts: 3 });
+        this.socket = io.connect(`${UrlUtil.parseUrl(this.url)}${LEDGER_SOCKET_NAMESPACE}`, this.settings);
         this.status = LoadableStatus.LOADING;
     }
 
@@ -225,15 +226,31 @@ export class LedgerSocket extends Loadable<LedgerSocketEvent, Partial<LedgerInfo
     //--------------------------------------------------------------------------
 
     public get url(): string {
-        return this._url;
+        return !_.isNil(this.settings) ? this.settings.url : null;
     }
 
     public set url(value: string) {
-        if (value == this._url) {
+        if (!_.isNil(this.settings)) {
+            this.settings.url = value;
+        }
+    }
+
+    public get settings(): ILedgerSocketSettings {
+        return this._settings;
+    }
+
+    public set settings(value: ILedgerSocketSettings) {
+        if (value === this._settings) {
             return;
         }
-        this._url = value;
+        this._settings = value;
     }
+}
+
+//  io.SocketIOClient.ConnectOpts
+export interface ILedgerSocketSettings extends SocketIOClient.ConnectOpts {
+    url: string;
+    filterLedgerId?: number;
 }
 
 export const LEDGER_SOCKET_NAMESPACE = `ledger`;
