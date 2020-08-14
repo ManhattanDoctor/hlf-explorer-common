@@ -61,6 +61,13 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
     }
 
+    protected ledgerFilter(ledgerId: number): boolean {
+        if (_.isNil(ledgerId)) {
+            throw new ExtendedError(`Ledger id is Nil`);
+        }
+        return !_.isNil(this.settings.filterLedgerId) ? this.settings.filterLedgerId === ledgerId : true;
+    }
+
     // --------------------------------------------------------------------------
     //
     //  Command Methods
@@ -156,17 +163,28 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     }
 
     protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
+        if (!this.ledgerFilter(ledger.id)) {
+            return;
+        }
+
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_BLOCK_PARSED, ledger));
 
         let item = ledger.blockLast;
-        if (_.isNil(item) || _.isEmpty(item.events)) {
+        if (!_.isNil(item) && !_.isEmpty(item.events)) {
             return;
         }
-        _.forEach(item.events, item => this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_EVENT_DISPATCHED, { id: ledger.id, event: item.data })));
+        for (let event of item.events) {
+            this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_EVENT_DISPATCHED, { id: ledger.id, event: event.data }));
+            if (this.eventDispatchers.has(event.name)) {
+                this.eventDispatchers.get(event.name).next(event.data);
+            }
+        }
     }
 
     protected ledgerUpdatedHandler(ledger: Partial<LedgerInfo>): void {
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
+        if (this.ledgerFilter(ledger.id)) {
+            this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
+        }
     }
 
     protected socketErrorHandler(event: any): void {
