@@ -1,5 +1,6 @@
 import { LedgerBlock, LedgerInfo } from '../ledger';
 import { Loadable, LoadableStatus, LoadableEvent } from '@ts-core/common/Loadable';
+import { ObjectUtil } from '@ts-core/common/util';
 import * as io from 'socket.io-client';
 import { ObservableData } from '@ts-core/common/observer';
 import { ExtendedError } from '@ts-core/common/error';
@@ -22,13 +23,15 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     protected error: ExtendedError;
     protected eventDispatchers: Map<string, Subject<any>>;
 
+    protected _ledgerFiltered: LedgerInfo;
+
     // --------------------------------------------------------------------------
     //
     //  Constructor
     //
     // --------------------------------------------------------------------------
 
-    constructor(protected logger: ILogger) {
+    constructor(protected logger: ILogger, protected ledgerFilterName?: string) {
         super();
         this._settings = { url: null, reconnectionAttempts: 3 };
         this.eventDispatchers = new Map();
@@ -65,7 +68,7 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         if (_.isNil(ledgerId)) {
             throw new ExtendedError(`Ledger id is Nil`);
         }
-        return !_.isNil(this.settings.filterLedgerId) ? this.settings.filterLedgerId === ledgerId : true;
+        return !_.isNil(this.ledgerFiltered) ? this.ledgerFiltered.id === ledgerId : true;
     }
 
     // --------------------------------------------------------------------------
@@ -113,6 +116,9 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this.eventDispatchers.clear();
         this.eventDispatchers = null;
 
+        this._ledgerFiltered = null;
+
+        this.ledgerFilterName = null;
         this.logger = null;
     }
 
@@ -160,6 +166,10 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
 
     protected ledgerListReceivedHandler(items: Array<LedgerInfo>): void {
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST_RECEIVED, items));
+
+        if (!_.isNil(this.ledgerFilterName)) {
+            this._ledgerFiltered = _.find(items, { name: this.ledgerFilterName });
+        }
     }
 
     protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
@@ -182,8 +192,20 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     }
 
     protected ledgerUpdatedHandler(ledger: Partial<LedgerInfo>): void {
-        if (this.ledgerFilter(ledger.id)) {
-            this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
+        if (!this.ledgerFilter(ledger.id)) {
+            return;
+        }
+
+        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
+        if (_.isNil(this.ledgerFiltered)) {
+            return;
+        }
+
+        ObjectUtil.copyProperties(ledger, this.ledgerFiltered);
+        if (!_.isNil(ledger.blockLast)) {
+            this.ledgerFiltered.blocksLast.add(ledger.blockLast);
+            this.ledgerFiltered.eventsLast.addItems(ledger.blockLast.events);
+            this.ledgerFiltered.transactionsLast.addItems(ledger.blockLast.transactions);
         }
     }
 
@@ -263,12 +285,15 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
         this._settings = value;
     }
+
+    public get ledgerFiltered(): LedgerInfo {
+        return this._ledgerFiltered;
+    }
 }
 
 //  io.SocketIOClient.ConnectOpts
 export interface ILedgerSocketSettings extends SocketIOClient.ConnectOpts {
     url: string;
-    filterLedgerId?: number;
 }
 
 export const LEDGER_SOCKET_NAMESPACE = `ledger`;
