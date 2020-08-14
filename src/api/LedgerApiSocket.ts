@@ -18,12 +18,11 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     // --------------------------------------------------------------------------
 
     protected _socket: any;
+    protected _ledger: LedgerInfo;
     protected _settings: any;
 
     protected error: ExtendedError;
     protected eventDispatchers: Map<string, Subject<any>>;
-
-    protected _ledgerFiltered: LedgerInfo;
 
     // --------------------------------------------------------------------------
     //
@@ -31,7 +30,7 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     // --------------------------------------------------------------------------
 
-    constructor(protected logger: ILogger, protected ledgerFilterName?: string) {
+    constructor(protected logger: ILogger, protected filterByName?: string) {
         super();
         this._settings = { url: null, reconnectionAttempts: 3 };
         this.eventDispatchers = new Map();
@@ -64,11 +63,11 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
     }
 
-    protected ledgerFilter(ledgerId: number): boolean {
+    private ledgerFilter(ledgerId: number): boolean {
         if (_.isNil(ledgerId)) {
             throw new ExtendedError(`Ledger id is Nil`);
         }
-        return !_.isNil(this.ledgerFiltered) ? this.ledgerFiltered.id === ledgerId : true;
+        return !_.isNil(this.ledger) ? this.ledger.id === ledgerId : true;
     }
 
     // --------------------------------------------------------------------------
@@ -112,13 +111,13 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         super.destroy();
         this.disconnect();
 
+        this._ledger = null;
+
         this.eventDispatchers.forEach(item => item.complete());
         this.eventDispatchers.clear();
         this.eventDispatchers = null;
 
-        this._ledgerFiltered = null;
-
-        this.ledgerFilterName = null;
+        this.filterByName = null;
         this.logger = null;
     }
 
@@ -167,8 +166,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     protected ledgerListReceivedHandler(items: Array<LedgerInfo>): void {
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST_RECEIVED, items));
 
-        if (!_.isNil(this.ledgerFilterName)) {
-            this._ledgerFiltered = _.find(items, { name: this.ledgerFilterName });
+        if (!_.isNil(this.filterByName)) {
+            this._ledger = _.find(items, { name: this.filterByName });
         }
     }
 
@@ -197,15 +196,15 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
 
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
-        if (_.isNil(this.ledgerFiltered)) {
+        if (_.isNil(this.ledger)) {
             return;
         }
 
-        ObjectUtil.copyProperties(ledger, this.ledgerFiltered);
+        ObjectUtil.copyProperties(ledger, this.ledger);
         if (!_.isNil(ledger.blockLast)) {
-            this.ledgerFiltered.blocksLast.add(ledger.blockLast);
-            this.ledgerFiltered.eventsLast.addItems(ledger.blockLast.events);
-            this.ledgerFiltered.transactionsLast.addItems(ledger.blockLast.transactions);
+            this.ledger.blocksLast.add(ledger.blockLast);
+            this.ledger.eventsLast.addItems(ledger.blockLast.events);
+            this.ledger.transactionsLast.addItems(ledger.blockLast.transactions);
         }
     }
 
@@ -265,6 +264,10 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     //--------------------------------------------------------------------------
 
+    public get ledger(): LedgerInfo {
+        return this._ledger;
+    }
+
     public get url(): string {
         return !_.isNil(this.settings) ? this.settings.url : null;
     }
@@ -284,10 +287,6 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
             return;
         }
         this._settings = value;
-    }
-
-    public get ledgerFiltered(): LedgerInfo {
-        return this._ledgerFiltered;
     }
 }
 
