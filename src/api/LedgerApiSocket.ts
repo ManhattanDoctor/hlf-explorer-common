@@ -9,6 +9,7 @@ import * as _ from 'lodash';
 import { ITransportEvent } from '@ts-core/common/transport';
 import { Observable, Subject } from 'rxjs';
 import { ILogger } from '@ts-core/common/logger';
+import { PromiseHandler } from '@ts-core/common/promise';
 
 export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerInfo> | Array<LedgerInfo> | LedgerSocketEventData | ExtendedError> {
     // --------------------------------------------------------------------------
@@ -23,6 +24,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
 
     protected error: ExtendedError;
     protected eventDispatchers: Map<string, Subject<any>>;
+
+    protected connectionPromise: PromiseHandler<void, ExtendedError>;
 
     // --------------------------------------------------------------------------
     //
@@ -70,6 +73,19 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         return !_.isNil(this.ledger) ? this.ledger.id === ledgerId : true;
     }
 
+    private connectionResolve(): void {
+        if (!_.isNil(this.connectionPromise)) {
+            this.connectionPromise.resolve();
+        }
+    }
+
+    private connectionReject(): void {
+        if (!_.isNil(this.connectionPromise)) {
+            this.connectionPromise.reject(this.error);
+            this.connectionPromise = null;
+        }
+    }
+
     // --------------------------------------------------------------------------
     //
     //  Command Methods
@@ -91,20 +107,25 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     // --------------------------------------------------------------------------
 
-    public connect(): void {
-        if (this.isLoaded || this.isLoading) {
-            return;
+    public async connect(): Promise<void> {
+        if (!_.isNil(this.connectionPromise)) {
+            return this.connectionPromise.promise;
         }
+
         this.socket = io.connect(`${UrlUtil.parseUrl(this.url)}${LEDGER_SOCKET_NAMESPACE}`, this.settings);
         this.status = LoadableStatus.LOADING;
+
+        this.connectionPromise = PromiseHandler.create();
+        return this.connectionPromise.promise;
     }
 
     public disconnect(): void {
-        if (this.status === LoadableStatus.NOT_LOADED || this.isError) {
+        if (this.status === LoadableStatus.NOT_LOADED) {
             return;
         }
         this.socket = null;
         this.status = LoadableStatus.NOT_LOADED;
+        this.connectionReject();
     }
 
     public destroy(): void {
@@ -127,10 +148,6 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     //--------------------------------------------------------------------------
 
-    private proxyLedgerListReceivedHandler = (items: Array<LedgerInfo>): void => {
-        this.ledgerListReceivedHandler(items.map(item => LedgerInfo.toClass(item)));
-    };
-
     private proxyLedgerBlockParsed = (ledger: Partial<LedgerInfo>): void => {
         if (!_.isNil(ledger.blockLast)) {
             ledger.blockLast = TransformUtil.toClass(LedgerBlock, ledger.blockLast);
@@ -145,7 +162,11 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this.ledgerUpdatedHandler(ledger);
     };
 
-    private proxySocketConnectedHandler = (event: any): void => {
+    private proxyLedgerListReceivedHandler = (items: Array<LedgerInfo>): void => {
+        this.ledgerListReceivedHandler(items.map(item => LedgerInfo.toClass(item)));
+    };
+
+    private proxySocketConnectedHandler = (): void => {
         this.socketConnectedHandler();
     };
 
@@ -153,8 +174,16 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this.socketErrorHandler(event);
     };
 
-    private proxySocketDisconnectedHandler = (event: any): void => {
-        this.socketDisconnectedHandler();
+    private proxySocketDisconnectedHandler = (reason: string): void => {
+        this.socketDisconnectedHandler(reason);
+    };
+
+    private proxySocketReconnectErrorHandler = (event: any): void => {
+        this.socketReconnectErrorHandler(event);
+    };
+
+    private proxySocketReconnectFailedHandler = (): void => {
+        this.socketReconnectFailedHandler();
     };
 
     //--------------------------------------------------------------------------
@@ -179,7 +208,7 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_BLOCK_PARSED, ledger));
 
         let item = ledger.blockLast;
-        if (!_.isNil(item) && !_.isEmpty(item.events)) {
+        if (_.isNil(item) || _.isEmpty(item.events)) {
             return;
         }
         for (let event of item.events) {
@@ -208,17 +237,35 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
     }
 
-    protected socketErrorHandler(event: any): void {
-        this.error = new ExtendedError(event);
-        this.status = LoadableStatus.ERROR;
-    }
-
     protected socketConnectedHandler(): void {
+        this.error = null;
         this.status = LoadableStatus.LOADED;
+        this.connectionResolve();
     }
 
-    protected socketDisconnectedHandler(): void {
-        this.status = LoadableStatus.ERROR;
+    protected socketErrorHandler(reason: any): void {
+        this.error = new ExtendedError(reason);
+        this.status = LoadableStatus.NOT_LOADED;
+        this.connectionReject();
+    }
+
+    protected socketDisconnectedHandler(reason: string): void {
+        this.error = new ExtendedError(reason);
+        this.status = LoadableStatus.NOT_LOADED;
+        this.connectionReject();
+    }
+
+    protected socketConnectErrorHandler(event: any): void {
+        this.error = ExtendedError.create(event);
+    }
+
+    protected socketReconnectErrorHandler(event: any): void {
+        this.error = ExtendedError.create(event);
+    }
+
+    protected socketReconnectFailedHandler(): void {
+        this.status = LoadableStatus.NOT_LOADED;
+        this.connectionReject();
     }
 
     //--------------------------------------------------------------------------
@@ -243,6 +290,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
             this._socket.removeEventListener('error', this.proxySocketErrorHandler);
             this._socket.removeEventListener('connect', this.proxySocketConnectedHandler);
             this._socket.removeEventListener('disconnect', this.proxySocketDisconnectedHandler);
+            this._socket.removeEventListener('reconnect_error', this.proxySocketReconnectErrorHandler);
+            this._socket.removeEventListener('reconnect_failed', this.proxySocketReconnectFailedHandler);
             this._socket.disconnect();
         }
 
@@ -255,6 +304,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
             this._socket.addEventListener('error', this.proxySocketErrorHandler);
             this._socket.addEventListener('connect', this.proxySocketConnectedHandler);
             this._socket.addEventListener('disconnect', this.proxySocketDisconnectedHandler);
+            this._socket.addEventListener('reconnect_error', this.proxySocketReconnectErrorHandler);
+            this._socket.addEventListener('reconnect_failed', this.proxySocketReconnectFailedHandler);
         }
     }
 
