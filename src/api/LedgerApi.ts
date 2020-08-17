@@ -86,7 +86,7 @@ export class LedgerApi extends Destroyable {
     //
     // --------------------------------------------------------------------------
 
-    public commandSend<U>(command: TransportCommandFabric<U>, options?: ITransportFabricCommandOptions, ledgerId?: number): void {
+    public requestSend<U>(command: TransportCommandFabric<U>, options?: ITransportFabricCommandOptions, ledgerId?: number): void {
         this.http.send(
             new TransportHttpCommand<ILedgerCommandRequest<U>>(`api/ledger/command`, {
                 data: this.createCommandRequest(command, options, ledgerId),
@@ -95,7 +95,7 @@ export class LedgerApi extends Destroyable {
         );
     }
 
-    public async commandSendListen<U, V>(command: TransportCommandFabricAsync<U, V>, options?: ITransportFabricCommandOptions, ledgerId?: number): Promise<V> {
+    public async requestSendListen<U, V>(command: TransportCommandFabricAsync<U, V>, options?: ITransportFabricCommandOptions, ledgerId?: number): Promise<V> {
         command.response(
             await this.http.sendListen(
                 new TransportHttpCommandAsync<V, ILedgerCommandRequest<U>>(`api/ledger/command`, {
