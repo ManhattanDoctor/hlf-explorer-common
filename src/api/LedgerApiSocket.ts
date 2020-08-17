@@ -198,6 +198,7 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         if (!_.isNil(this.filterByName)) {
             this._ledger = _.find(items, { name: this.filterByName });
         }
+        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_FILTERED, this.ledger));
     }
 
     protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
@@ -350,6 +351,7 @@ export const LEDGER_SOCKET_NAMESPACE = `ledger`;
 
 export enum LedgerSocketEvent {
     LEDGER_UPDATED = 'LEDGER_UPDATED',
+    LEDGER_FILTERED = 'LEDGER_FILTERED',
     LEDGER_BLOCK_PARSED = 'LEDGER_BLOCK_PARSED',
     LEDGER_LIST_RECEIVED = 'LEDGER_LIST_RECEIVED',
     LEDGER_EVENT_DISPATCHED = 'LEDGER_EVENT_DISPATCHED'
