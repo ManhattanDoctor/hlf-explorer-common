@@ -1,10 +1,9 @@
 import * as _ from 'lodash';
 import { Type } from 'class-transformer';
-import { ITransportFabricEvent } from '@ts-core/blockchain-fabric/transport/block/ITransportFabricEvent';
 import { ObjectUtil } from '@ts-core/common/util';
 import { ITransportEvent } from '@ts-core/common/transport';
 
-export class LedgerBlockEvent<T = any> implements ITransportFabricEvent<ITransportEvent<T>> {
+export class LedgerBlockEvent<T = any> {
     // --------------------------------------------------------------------------
     //
     //  Static Methods

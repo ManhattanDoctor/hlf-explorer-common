@@ -1,9 +1,8 @@
-import { ITransportCommandFabric } from '@ts-core/blockchain-fabric/transport/TransportFabric';
-import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport/ITransportFabricCommandOptions';
+import { ITransportCommand, ITransportCommandOptions } from '@ts-core/common/transport';
 
 export interface ILedgerRequestRequest<U = any> {
-    request: ITransportCommandFabric<U>;
-    options: ITransportFabricCommandOptions;
+    request: ITransportCommand<U>;
+    options: ITransportCommandOptions;
     isAsync: boolean;
     ledgerId: number;
 }

@@ -1,4 +1,3 @@
-import { Block } from 'fabric-client';
 import { Type } from 'class-transformer';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 import { LedgerBlockEvent } from './LedgerBlockEvent';
@@ -26,7 +25,7 @@ export class LedgerBlock {
 
     public hash: string;
     public number: number;
-    public rawData: Block;
+    public rawData: any;
 
     @Type(() => Date)
     public createdDate: Date;

@@ -1,13 +1,10 @@
 import * as _ from 'lodash';
 import { Type } from 'class-transformer';
-import { ITransportFabricTransaction } from '@ts-core/blockchain-fabric/transport/block/ITransportFabricTransaction';
-import { ITransportFabricRequestPayload } from '@ts-core/blockchain-fabric/transport/TransportFabricRequestPayload';
-import { ITransportFabricResponsePayload } from '@ts-core/blockchain-fabric/transport/TransportFabricResponsePayload';
-import { FabricTransactionValidationCode } from '@ts-core/blockchain-fabric/api/IFabricTransaction';
-import { ITransportFabricTransactionChaincode } from '@ts-core/blockchain-fabric/transport/block/ITransportFabricTransaction';
 import { ObjectUtil } from '@ts-core/common/util';
+import { ITransportCommandOptions } from '@ts-core/common/transport';
+import { ExtendedError } from '@ts-core/common/error';
 
-export class LedgerBlockTransaction implements ITransportFabricTransaction {
+export class LedgerBlockTransaction {
     // --------------------------------------------------------------------------
     //
     //  Static Methods
@@ -40,9 +37,32 @@ export class LedgerBlockTransaction implements ITransportFabricTransaction {
 
     public responseErrorCode: number;
 
-    public request: ITransportFabricRequestPayload;
-    public response: ITransportFabricResponsePayload;
-    public chaincode: ITransportFabricTransactionChaincode;
+    public request: ILedgerBlockTransactionRequestPayload;
+    public response: ILedgerBlockTransactionResponsePayload;
+    public chaincode: ILedgerBlockTransactionChaincode;
 
-    public validationCode: FabricTransactionValidationCode;
+    // FabricTransactionValidationCode
+    public validationCode: number;
+}
+
+// ITransportFabricRequestPayload
+export interface ILedgerBlockTransactionRequestPayload<U = any> {
+    id: string;
+    name: string;
+    request: U;
+    options: ITransportCommandOptions;
+    isNeedReply: boolean;
+}
+
+// ITransportFabricResponsePayload
+export interface ILedgerBlockTransactionResponsePayload<V = any> {
+    id: string;
+    response?: ExtendedError | V;
+}
+
+// ITransportFabricTransactionChaincode
+export interface ILedgerBlockTransactionChaincode {
+    name: string;
+    path: string;
+    version: string;
 }

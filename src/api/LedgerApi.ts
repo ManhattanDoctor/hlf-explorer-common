@@ -10,9 +10,7 @@ import { TransformUtil } from '@ts-core/common/util';
 import { ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest } from './transaction';
 import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import * as _ from 'lodash';
-import { TransportCommandFabric } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabric';
-import { TransportCommandFabricAsync } from '@ts-core/blockchain-fabric/transport/command/TransportCommandFabricAsync';
-import { ITransportFabricCommandOptions } from '@ts-core/blockchain-fabric/transport/ITransportFabricCommandOptions';
+import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions } from '@ts-core/common/transport';
 import { Transport } from '@ts-core/common/transport';
 import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
@@ -45,8 +43,8 @@ export class LedgerApi extends Destroyable {
     //--------------------------------------------------------------------------
 
     protected createRequest<U, V = any>(
-        command: TransportCommandFabric<U> | TransportCommandFabricAsync<U, V>,
-        options?: ITransportFabricCommandOptions,
+        command: ITransportCommand<U> | ITransportCommandAsync<U, V>,
+        options?: ITransportCommandOptions,
         ledgerId?: number
     ): ILedgerRequestRequest {
         if (_.isNil(options)) {
@@ -86,7 +84,7 @@ export class LedgerApi extends Destroyable {
     //
     // --------------------------------------------------------------------------
 
-    public requestSend<U>(command: TransportCommandFabric<U>, options?: ITransportFabricCommandOptions, ledgerId?: number): void {
+    public requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerId?: number): void {
         this.http.send(
             new TransportHttpCommand<ILedgerRequestRequest<U>>(`api/ledger/request`, {
                 data: this.createRequest(command, options, ledgerId),
@@ -95,7 +93,7 @@ export class LedgerApi extends Destroyable {
         );
     }
 
-    public async requestSendListen<U, V>(command: TransportCommandFabricAsync<U, V>, options?: ITransportFabricCommandOptions, ledgerId?: number): Promise<V> {
+    public async requestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerId?: number): Promise<V> {
         command.response(
             await this.http.sendListen(
                 new TransportHttpCommandAsync<V, ILedgerRequestRequest<U>>(`api/ledger/request`, {
@@ -242,10 +240,6 @@ export class LedgerApi extends Destroyable {
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
-    sign?: <U, V = any>(
-        command: TransportCommandFabric<U> | TransportCommandFabricAsync<U, V>,
-        options: ITransportFabricCommandOptions
-    ) => ITransportFabricCommandOptions;
-
+    sign?: <U, V = any>(command: ITransportCommand<U> | ITransportCommandAsync<U, V>, options: ITransportCommandOptions) => ITransportCommandOptions;
     defaultLedgerId?: number;
 }
