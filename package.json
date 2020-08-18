@@ -9,7 +9,7 @@
     },
     "license": "ISC",
     "peerDependencies": {
-        "@ts-core/common": "^1.0.108",
+        "@ts-core/common": "^1.0.112",
         "@types/socket.io-client": "1.4.32",
         "socket.io-client": "2.2.0"
     },
