@@ -42,17 +42,9 @@ export class LedgerApi extends Destroyable {
     //
     //--------------------------------------------------------------------------
 
-    protected createRequest<U, V = any>(
-        command: ITransportCommand<U> | ITransportCommandAsync<U, V>,
-        options?: ITransportCommandOptions,
-        ledgerId?: number
-    ): ILedgerRequestRequest {
+    protected createRequest<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerId?: number): ILedgerRequestRequest {
         if (_.isNil(options)) {
             options = {} as any;
-        }
-
-        if (!_.isNil(this.settings.sign)) {
-            options = this.settings.sign(command, options);
         }
 
         return {
@@ -240,6 +232,5 @@ export class LedgerApi extends Destroyable {
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
-    sign?: <U, V = any>(command: ITransportCommand<U> | ITransportCommandAsync<U, V>, options: ITransportCommandOptions) => ITransportCommandOptions;
     defaultLedgerId?: number;
 }
