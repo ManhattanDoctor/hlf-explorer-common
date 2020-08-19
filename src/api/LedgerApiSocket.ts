@@ -33,9 +33,9 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     // --------------------------------------------------------------------------
 
-    constructor(protected logger: ILogger, protected filterByName?: string) {
+    constructor(protected logger: ILogger, url?: string, protected filterByName?: string) {
         super();
-        this._settings = { url: null, reconnectionAttempts: 3 };
+        this._settings = { url, reconnectionAttempts: 3 };
         this.eventDispatchers = new Map();
     }
 
