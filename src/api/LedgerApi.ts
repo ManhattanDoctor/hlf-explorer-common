@@ -31,10 +31,16 @@ export class LedgerApi extends Destroyable {
     //
     // --------------------------------------------------------------------------
 
-    constructor(logger: ILogger, url?: string) {
+    constructor(logger: ILogger, url?: string, defaultLedgerName?: string) {
         super();
         this._http = new TransportHttp(logger, { method: 'get' });
-        this.url = url;
+
+        if (!_.isNil(url)) {
+            this.url = url;
+        }
+        if (!_.isNil(defaultLedgerName)) {
+            this.settings.defaultLedgerName = defaultLedgerName;
+        }
     }
 
     //--------------------------------------------------------------------------
