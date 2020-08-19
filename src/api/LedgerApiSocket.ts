@@ -33,10 +33,14 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     // --------------------------------------------------------------------------
 
-    constructor(protected logger: ILogger, url?: string, protected filterByName?: string) {
+    constructor(protected logger: ILogger, url?: string, defaultLedgerName?: string) {
         super();
-        this._settings = { url, reconnectionAttempts: 3 };
+        this._settings = { defaultLedgerName, reconnectionAttempts: 3 };
         this.eventDispatchers = new Map();
+
+        if (!_.isNil(url)) {
+            this.url = url;
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -133,12 +137,12 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this.disconnect();
 
         this._ledger = null;
+        this._settings = null;
 
         this.eventDispatchers.forEach(item => item.complete());
         this.eventDispatchers.clear();
         this.eventDispatchers = null;
 
-        this.filterByName = null;
         this.logger = null;
     }
 
@@ -195,10 +199,10 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     protected ledgerListReceivedHandler(items: Array<LedgerInfo>): void {
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST_RECEIVED, items));
 
-        if (!_.isNil(this.filterByName)) {
-            this._ledger = _.find(items, { name: this.filterByName });
+        if (!_.isNil(this.settings.defaultLedgerName)) {
+            this._ledger = _.find(items, { name: this.settings.defaultLedgerName });
         }
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_FILTERED, this.ledger));
+        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_READY, this.ledger));
     }
 
     protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
@@ -345,13 +349,15 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
 //  io.SocketIOClient.ConnectOpts
 export interface ILedgerSocketSettings extends SocketIOClient.ConnectOpts {
     url: string;
+    defaultLedgerName?: string;
 }
 
 export const LEDGER_SOCKET_NAMESPACE = `ledger`;
 
 export enum LedgerSocketEvent {
+    LEDGER_READY = 'LEDGER_READY',
+
     LEDGER_UPDATED = 'LEDGER_UPDATED',
-    LEDGER_FILTERED = 'LEDGER_FILTERED',
     LEDGER_BLOCK_PARSED = 'LEDGER_BLOCK_PARSED',
     LEDGER_LIST_RECEIVED = 'LEDGER_LIST_RECEIVED',
     LEDGER_EVENT_DISPATCHED = 'LEDGER_EVENT_DISPATCHED'
