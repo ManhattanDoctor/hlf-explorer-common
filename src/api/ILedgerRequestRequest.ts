@@ -4,5 +4,5 @@ export interface ILedgerRequestRequest<U = any> {
     request: ITransportCommand<U>;
     options: ITransportCommandOptions;
     isAsync: boolean;
-    ledgerId: number;
+    ledgerName: string;
 }

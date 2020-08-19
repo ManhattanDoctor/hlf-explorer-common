@@ -42,7 +42,7 @@ export class LedgerApi extends Destroyable {
     //
     //--------------------------------------------------------------------------
 
-    protected createRequest<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerId?: number): ILedgerRequestRequest {
+    protected createRequest<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): ILedgerRequestRequest {
         if (_.isNil(options)) {
             options = {} as any;
         }
@@ -50,12 +50,12 @@ export class LedgerApi extends Destroyable {
         return {
             request: TransformUtil.fromClass(command),
             isAsync: Transport.isCommandAsync(command),
-            ledgerId: this.getLedgerId(ledgerId),
+            ledgerName: this.getLedgerName(ledgerName),
             options
         };
     }
 
-    protected checkPaginable<U>(data: Paginable<U>, ledgerId: number): void {
+    protected checkPaginable<U>(data: Paginable<U>, ledgerName: string): void {
         if (_.isNil(data)) {
             return;
         }
@@ -63,11 +63,11 @@ export class LedgerApi extends Destroyable {
         if (_.isNil(data.conditions)) {
             data.conditions = {};
         }
-        Object.assign(data.conditions, { ledgerId: this.getLedgerId(ledgerId) });
+        Object.assign(data.conditions, { ledgerName: this.getLedgerName(ledgerName) });
     }
 
-    protected getLedgerId(ledgerId?: number): number {
-        return !_.isNil(ledgerId) ? ledgerId : this.settings.defaultLedgerId;
+    protected getLedgerName(ledgerName?: string): string {
+        return !_.isNil(ledgerName) ? ledgerName : this.settings.defaultLedgerName;
     }
 
     // --------------------------------------------------------------------------
@@ -76,20 +76,20 @@ export class LedgerApi extends Destroyable {
     //
     // --------------------------------------------------------------------------
 
-    public requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerId?: number): void {
+    public requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): void {
         this.http.send(
             new TransportHttpCommand<ILedgerRequestRequest<U>>(`api/ledger/request`, {
-                data: this.createRequest(command, options, ledgerId),
+                data: this.createRequest(command, options, ledgerName),
                 method: 'post'
             })
         );
     }
 
-    public async requestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerId?: number): Promise<V> {
+    public async requestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerName?: string): Promise<V> {
         command.response(
             await this.http.sendListen(
                 new TransportHttpCommandAsync<V, ILedgerRequestRequest<U>>(`api/ledger/request`, {
-                    data: this.createRequest(command, options, ledgerId),
+                    data: this.createRequest(command, options, ledgerName),
                     method: 'post'
                 })
             )
@@ -118,17 +118,17 @@ export class LedgerApi extends Destroyable {
         return items;
     }
 
-    public async getBlock(hashOrNumber: number | string, ledgerId?: number): Promise<LedgerBlock> {
+    public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
         let item = await this.http.sendListen(
             new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(`api/ledger/block`, {
-                data: { hashOrNumber, ledgerId: this.getLedgerId(ledgerId) }
+                data: { hashOrNumber, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
         return TransformUtil.toClass(LedgerBlock, item.value);
     }
 
-    public async getBlockList(data?: Paginable<LedgerBlock>, ledgerId?: number): Promise<IPagination<LedgerBlock>> {
-        this.checkPaginable(data, ledgerId);
+    public async getBlockList(data?: Paginable<LedgerBlock>, ledgerName?: string): Promise<IPagination<LedgerBlock>> {
+        this.checkPaginable(data, ledgerName);
 
         let items = await this.http.sendListen(
             new TransportHttpCommandAsync<IPagination<LedgerBlock>>(`api/ledger/blocks`, { data })
@@ -137,17 +137,17 @@ export class LedgerApi extends Destroyable {
         return items;
     }
 
-    public async getTransaction(hash: string, ledgerId?: number): Promise<LedgerBlockTransaction> {
+    public async getTransaction(hash: string, ledgerName?: string): Promise<LedgerBlockTransaction> {
         let item = await this.http.sendListen(
             new TransportHttpCommandAsync<ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest>(`api/ledger/transaction`, {
-                data: { hash, ledgerId: this.getLedgerId(ledgerId) }
+                data: { hash, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
         return TransformUtil.toClass(LedgerBlockTransaction, item.value);
     }
 
-    public async getTransactionList(data?: Paginable<LedgerBlockTransaction>, ledgerId?: number): Promise<IPagination<LedgerBlockTransaction>> {
-        this.checkPaginable(data, ledgerId);
+    public async getTransactionList(data?: Paginable<LedgerBlockTransaction>, ledgerName?: string): Promise<IPagination<LedgerBlockTransaction>> {
+        this.checkPaginable(data, ledgerName);
 
         let items = await this.http.sendListen(
             new TransportHttpCommandAsync<IPagination<LedgerBlockTransaction>>(`api/ledger/transactions`, { data })
@@ -156,17 +156,17 @@ export class LedgerApi extends Destroyable {
         return items;
     }
 
-    public async getEvent(uid: string, ledgerId?: number): Promise<LedgerBlockEvent> {
+    public async getEvent(uid: string, ledgerName?: string): Promise<LedgerBlockEvent> {
         let item = await this.http.sendListen(
             new TransportHttpCommandAsync<ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest>(`api/ledger/event`, {
-                data: { uid, ledgerId: this.getLedgerId(ledgerId) }
+                data: { uid, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
         return TransformUtil.toClass(LedgerBlockEvent, item.value);
     }
 
-    public async getEventList(data?: Paginable<LedgerBlockEvent>, ledgerId?: number): Promise<IPagination<LedgerBlockEvent>> {
-        this.checkPaginable(data, ledgerId);
+    public async getEventList(data?: Paginable<LedgerBlockEvent>, ledgerName?: string): Promise<IPagination<LedgerBlockEvent>> {
+        this.checkPaginable(data, ledgerName);
 
         let items = await this.http.sendListen(
             new TransportHttpCommandAsync<IPagination<LedgerBlockEvent>>(`api/ledger/events`, { data })
@@ -175,10 +175,10 @@ export class LedgerApi extends Destroyable {
         return items;
     }
 
-    public async search(query: string, ledgerId?: number): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
+    public async search(query: string, ledgerName?: string): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
         let item = await this.http.sendListen(
             new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>('api/ledger/search', {
-                data: { query, ledgerId: this.getLedgerId(ledgerId) }
+                data: { query, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
 
@@ -232,5 +232,5 @@ export class LedgerApi extends Destroyable {
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
-    defaultLedgerId?: number;
+    defaultLedgerName?: string;
 }
