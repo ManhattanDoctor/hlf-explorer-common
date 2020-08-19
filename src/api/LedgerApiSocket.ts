@@ -19,8 +19,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     // --------------------------------------------------------------------------
 
     protected _socket: any;
-    protected _ledger: LedgerInfo;
     protected _settings: any;
+    protected _ledgerDefault: LedgerInfo;
 
     protected error: ExtendedError;
     protected eventDispatchers: Map<string, Subject<any>>;
@@ -70,11 +70,11 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
     }
 
-    private ledgerFilter(ledgerId: number): boolean {
+    private ledgerDefaultFilter(ledgerId: number): boolean {
         if (_.isNil(ledgerId)) {
             throw new ExtendedError(`Ledger id is Nil`);
         }
-        return !_.isNil(this.ledger) ? this.ledger.id === ledgerId : true;
+        return !_.isNil(this.ledgerDefault) ? this.ledgerDefault.id === ledgerId : true;
     }
 
     private connectionResolve(): void {
@@ -136,8 +136,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         super.destroy();
         this.disconnect();
 
-        this._ledger = null;
         this._settings = null;
+        this._ledgerDefault = null;
 
         this.eventDispatchers.forEach(item => item.complete());
         this.eventDispatchers.clear();
@@ -199,14 +199,21 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     protected ledgerListReceivedHandler(items: Array<LedgerInfo>): void {
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST_RECEIVED, items));
 
-        if (!_.isNil(this.settings.defaultLedgerName)) {
-            this._ledger = _.find(items, { name: this.settings.defaultLedgerName });
+        if (_.isNil(this.settings.defaultLedgerName)) {
+            return;
         }
-        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_READY, this.ledger));
+
+        this._ledgerDefault = _.find(items, { name: this.settings.defaultLedgerName });
+        this.observer.next(
+            new ObservableData(
+                !_.isNil(this.ledgerDefault) ? LedgerSocketEvent.LEDGER_DEFAULT_FOUND : LedgerSocketEvent.LEDGER_DEFAULT_NOT_FOUND,
+                this.ledgerDefault
+            )
+        );
     }
 
     protected ledgerBlockParsed(ledger: Partial<LedgerInfo>): void {
-        if (!this.ledgerFilter(ledger.id)) {
+        if (!this.ledgerDefaultFilter(ledger.id)) {
             return;
         }
 
@@ -225,20 +232,20 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     }
 
     protected ledgerUpdatedHandler(ledger: Partial<LedgerInfo>): void {
-        if (!this.ledgerFilter(ledger.id)) {
+        if (!this.ledgerDefaultFilter(ledger.id)) {
             return;
         }
 
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_UPDATED, ledger));
-        if (_.isNil(this.ledger)) {
+        if (_.isNil(this.ledgerDefault)) {
             return;
         }
 
-        ObjectUtil.copyProperties(ledger, this.ledger);
+        ObjectUtil.copyProperties(ledger, this.ledgerDefault);
         if (!_.isNil(ledger.blockLast)) {
-            this.ledger.blocksLast.add(ledger.blockLast);
-            this.ledger.eventsLast.addItems(ledger.blockLast.events);
-            this.ledger.transactionsLast.addItems(ledger.blockLast.transactions);
+            this.ledgerDefault.blocksLast.add(ledger.blockLast);
+            this.ledgerDefault.eventsLast.addItems(ledger.blockLast.events);
+            this.ledgerDefault.transactionsLast.addItems(ledger.blockLast.transactions);
         }
     }
 
@@ -320,8 +327,8 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
     //
     //--------------------------------------------------------------------------
 
-    public get ledger(): LedgerInfo {
-        return this._ledger;
+    public get ledgerDefault(): LedgerInfo {
+        return this._ledgerDefault;
     }
 
     public get url(): string {
@@ -355,7 +362,8 @@ export interface ILedgerSocketSettings extends SocketIOClient.ConnectOpts {
 export const LEDGER_SOCKET_NAMESPACE = `ledger`;
 
 export enum LedgerSocketEvent {
-    LEDGER_READY = 'LEDGER_READY',
+    LEDGER_DEFAULT_FOUND = 'LEDGER_DEFAULT_FOUND',
+    LEDGER_DEFAULT_NOT_FOUND = 'LEDGER_DEFAULT_NOT_FOUND',
 
     LEDGER_UPDATED = 'LEDGER_UPDATED',
     LEDGER_BLOCK_PARSED = 'LEDGER_BLOCK_PARSED',
