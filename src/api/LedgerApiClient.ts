@@ -16,7 +16,7 @@ import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { Destroyable } from '@ts-core/common/Destroyable';
 
-export class LedgerApi extends Destroyable {
+export class LedgerApiClient extends Destroyable {
     // --------------------------------------------------------------------------
     //
     //  Properties
