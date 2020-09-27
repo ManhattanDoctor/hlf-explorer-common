@@ -166,6 +166,10 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this.ledgerUpdatedHandler(ledger);
     };
 
+    private proxyLedgerResetedHandler = (ledger: Partial<LedgerInfo>): void => {
+        this.ledgerResetedHandler(ledger);
+    };
+
     private proxyLedgerListReceivedHandler = (items: Array<LedgerInfo>): void => {
         this.ledgerListReceivedHandler(items.map(item => LedgerInfo.toClass(item)));
     };
@@ -229,6 +233,23 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
                 this.eventDispatchers.get(event.name).next(event.data);
             }
         }
+    }
+
+    protected ledgerResetedHandler(ledger: Partial<LedgerInfo>): void {
+        if (!this.ledgerDefaultFilter(ledger.id)) {
+            return;
+        }
+
+        this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_RESETED, ledger));
+
+        if (_.isNil(this.ledgerDefault)) {
+            return;
+        }
+
+        ObjectUtil.copyProperties(ledger, this.ledgerDefault);
+        this.ledgerDefault.blocksLast.clear();
+        this.ledgerDefault.eventsLast.clear();
+        this.ledgerDefault.transactionsLast.clear();
     }
 
     protected ledgerUpdatedHandler(ledger: Partial<LedgerInfo>): void {
@@ -296,6 +317,7 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         }
 
         if (this._socket) {
+            this._socket.removeEventListener(LedgerSocketEvent.LEDGER_RESETED, this.proxyLedgerResetedHandler);
             this._socket.removeEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
             this._socket.removeEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
             this._socket.removeEventListener(LedgerSocketEvent.LEDGER_LIST_RECEIVED, this.proxyLedgerListReceivedHandler);
@@ -310,6 +332,7 @@ export class LedgerApiSocket extends Loadable<LedgerSocketEvent, Partial<LedgerI
         this._socket = value;
 
         if (this._socket) {
+            this._socket.addEventListener(LedgerSocketEvent.LEDGER_RESETED, this.proxyLedgerResetedHandler);
             this._socket.addEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
             this._socket.addEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
             this._socket.addEventListener(LedgerSocketEvent.LEDGER_LIST_RECEIVED, this.proxyLedgerListReceivedHandler);
@@ -365,6 +388,7 @@ export enum LedgerSocketEvent {
     LEDGER_DEFAULT_FOUND = 'LEDGER_DEFAULT_FOUND',
     LEDGER_DEFAULT_NOT_FOUND = 'LEDGER_DEFAULT_NOT_FOUND',
 
+    LEDGER_RESETED = 'LEDGER_RESETED',
     LEDGER_UPDATED = 'LEDGER_UPDATED',
     LEDGER_BLOCK_PARSED = 'LEDGER_BLOCK_PARSED',
     LEDGER_LIST_RECEIVED = 'LEDGER_LIST_RECEIVED',
