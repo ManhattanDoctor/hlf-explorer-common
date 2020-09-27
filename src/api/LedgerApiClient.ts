@@ -15,6 +15,7 @@ import { Transport } from '@ts-core/common/transport';
 import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { Destroyable } from '@ts-core/common/Destroyable';
+import { ILedgerResetRequest } from './ILedgerResetRequest';
 
 export class LedgerApiClient extends Destroyable {
     // --------------------------------------------------------------------------
@@ -180,6 +181,14 @@ export class LedgerApiClient extends Destroyable {
         );
         items.items = TransformUtil.toClassMany(LedgerBlockEvent, items.items);
         return items;
+    }
+
+    public async reset(password: string, ledgerName?: string): Promise<void> {
+        await this.http.sendListen(
+            new TransportHttpCommandAsync<void, ILedgerResetRequest>('api/ledger/reset', {
+                data: { password, ledgerName: this.getLedgerName(ledgerName) }
+            })
+        );
     }
 
     public async search(query: string, ledgerName?: string): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
