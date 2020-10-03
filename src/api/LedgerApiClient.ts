@@ -50,7 +50,7 @@ export class LedgerApiClient extends Destroyable {
     //
     //--------------------------------------------------------------------------
 
-    protected createRequest<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): ILedgerRequestRequest {
+    protected async createRequest<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<ILedgerRequestRequest> {
         if (_.isNil(options)) {
             options = {} as any;
         }
@@ -84,10 +84,10 @@ export class LedgerApiClient extends Destroyable {
     //
     // --------------------------------------------------------------------------
 
-    public requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): void {
+    public async requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> {
         this.http.send(
             new TransportHttpCommand<ILedgerRequestRequest<U>>(`api/ledger/request`, {
-                data: this.createRequest(command, options, ledgerName),
+                data: await this.createRequest(command, options, ledgerName),
                 method: 'post'
             })
         );
@@ -97,7 +97,7 @@ export class LedgerApiClient extends Destroyable {
         command.response(
             await this.http.sendListen(
                 new TransportHttpCommandAsync<V, ILedgerRequestRequest<U>>(`api/ledger/request`, {
-                    data: this.createRequest(command, options, ledgerName),
+                    data: await this.createRequest(command, options, ledgerName),
                     method: 'post'
                 })
             )
