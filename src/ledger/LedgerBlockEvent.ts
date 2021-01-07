@@ -29,6 +29,8 @@ export class LedgerBlockEvent<T = any> {
     public blockNumber: number;
     public transactionHash: string;
 
+    public isBatch?: boolean;
+
     @Type(() => Date)
     public createdDate: Date;
 

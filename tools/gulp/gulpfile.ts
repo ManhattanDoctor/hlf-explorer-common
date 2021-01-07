@@ -78,14 +78,23 @@ const packageCompile = async (): Promise<void> => {
     });
 };
 
+const packageUpdateDependencies = async (): Promise<void> => {
+    try {
+        if (await isFileExist(`package-lock.json`)) {
+            await run(`npm update`)();
+        } else {
+            await run(`npm install`)();
+        }
+    } catch (error) {}
+};
+
+const packageCommit = async (): Promise<void> => {
+    await run(`git commit -a -m "auto commit"`)();
+};
+
 const packageBuild = async (): Promise<void> => {
     // Update dependencies or install it
-    if (await isFileExist(`package-lock.json`)) {
-        await run(`npm update`)();
-    } else {
-        await run(`npm install`)();
-    }
-
+    await packageUpdateDependencies();
     // Remove output directory
     await del(output, { force: true });
     // Format and fix code
@@ -96,9 +105,20 @@ const packageBuild = async (): Promise<void> => {
     await filesCopy([`${projectDirectory}/package.json`, `!${projectDirectory}/node_modules/**/*`], output);
 };
 
+const packageLink = async (): Promise<void> => {
+    // Build package or copy files
+    await packageBuild();
+    // Copy package.js
+    await filesCopy([`${projectDirectory}/package.json`], output);
+    // Link in npm
+    await run(`npm --prefix ${output} link`)();
+};
+
 const packagePublish = async (type: 'patch' | 'minor' | 'major'): Promise<void> => {
     // Build package or copy files
     await packageBuild();
+    // Commit project
+    await packageCommit();
     // Update version of package.js
     await run(`npm --prefix ${projectDirectory} version ${type}`)();
     // Copy package.js
@@ -108,9 +128,10 @@ const packagePublish = async (type: 'patch' | 'minor' | 'major'): Promise<void> 
 };
 
 (() => {
+    task(`link`, () => packageLink());
+    task(`build`, () => packageBuild());
     task(`clean`, () => packageClean());
     task(`compile`, () => packageCompile());
-    task(`build`, () => packageBuild());
 
     task(`publish:patch`, () => packagePublish('patch'));
     task(`publish:minor`, () => packagePublish('minor'));

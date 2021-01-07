@@ -28,6 +28,9 @@ export class LedgerBlockTransaction {
     public channel: string;
     public blockNumber: number;
 
+    public isBatch?: boolean;
+    public blockBatched?: number;
+
     @Type(() => Date)
     public createdDate: Date;
 
