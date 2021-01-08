@@ -4,4 +4,6 @@ export class Ledger {
     public blockHeight: number;
     public blockFrequency: number;
     public blockHeightParsed: number;
+
+    public isBatch?: boolean;
 }
