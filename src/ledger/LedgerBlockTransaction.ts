@@ -29,7 +29,7 @@ export class LedgerBlockTransaction {
     public blockNumber: number;
 
     public isBatch?: boolean;
-    public blockBatched?: number;
+    public blockMined?: number;
 
     @Type(() => Date)
     public createdDate: Date;
