@@ -38,14 +38,12 @@ export class LedgerBlockTransaction {
     public requestName: string;
     public requestUserId: string;
 
+    public validationCode: number;
     public responseErrorCode: number;
 
     public request: ILedgerBlockTransactionRequestPayload;
     public response: ILedgerBlockTransactionResponsePayload;
     public chaincode: ILedgerBlockTransactionChaincode;
-
-    // FabricTransactionValidationCode
-    public validationCode: number;
 }
 
 // ITransportFabricRequestPayload

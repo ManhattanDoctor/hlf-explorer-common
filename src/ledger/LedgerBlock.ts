@@ -27,6 +27,8 @@ export class LedgerBlock {
     public number: number;
     public rawData: any;
 
+    public isBatch?: boolean;
+
     @Type(() => Date)
     public createdDate: Date;
 

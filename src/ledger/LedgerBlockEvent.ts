@@ -28,13 +28,11 @@ export class LedgerBlockEvent<T = any> {
     public chaincode: string;
     public blockNumber: number;
     public transactionHash: string;
-    // FabricTransactionValidationCode
     public transactionValidationCode: number;
-
-    public isBatch?: boolean;
 
     @Type(() => Date)
     public createdDate: Date;
 
     public data?: ITransportEvent<T>;
+    public isBatch?: boolean;
 }
