@@ -32,7 +32,5 @@ export class LedgerBlockEvent<T = any> {
 
     @Type(() => Date)
     public createdDate: Date;
-
     public data?: ITransportEvent<T>;
-    public isBatch?: boolean;
 }
