@@ -2,7 +2,8 @@ import { ITransportCommand, ITransportCommandOptions } from '@ts-core/common/tra
 
 export interface ILedgerRequestRequest<U = any> {
     request: ITransportCommand<U>;
-    options: ITransportCommandOptions;
+    options?: ITransportCommandOptions;
+    
     isAsync: boolean;
     ledgerName: string;
 }
