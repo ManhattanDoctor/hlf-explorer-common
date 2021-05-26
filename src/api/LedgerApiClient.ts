@@ -24,7 +24,7 @@ export class LedgerApiClient extends Destroyable {
     //
     // --------------------------------------------------------------------------
 
-    protected _http: TransportHttp;
+    protected _http: TransportHttp<ILedgerApiSettings>;
 
     // --------------------------------------------------------------------------
     //
@@ -86,7 +86,7 @@ export class LedgerApiClient extends Destroyable {
 
     public async requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> {
         this.http.send(
-            new TransportHttpCommand<ILedgerRequestRequest<U>>(`api/ledger/request`, {
+            new TransportHttpCommand<ILedgerRequestRequest<U>>(REQUEST_URL, {
                 data: await this.createRequest(command, options, ledgerName),
                 method: 'post'
             })
@@ -96,7 +96,7 @@ export class LedgerApiClient extends Destroyable {
     public async requestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerName?: string): Promise<V> {
         command.response(
             await this.http.sendListen(
-                new TransportHttpCommandAsync<V, ILedgerRequestRequest<U>>(`api/ledger/request`, {
+                new TransportHttpCommandAsync<V, ILedgerRequestRequest<U>>(REQUEST_URL, {
                     data: await this.createRequest(command, options, ledgerName),
                     method: 'post'
                 })
@@ -113,14 +113,14 @@ export class LedgerApiClient extends Destroyable {
 
     public async getInfo(nameOrId: number | string): Promise<LedgerInfo> {
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerInfoGetResponse, ILedgerInfoGetRequest>(`api/ledger/info`, { data: { nameOrId } })
+            new TransportHttpCommandAsync<ILedgerInfoGetResponse, ILedgerInfoGetRequest>(INFO_URL, { data: { nameOrId } })
         );
         return LedgerInfo.toClass(item.value);
     }
 
     public async getInfoList(data?: Paginable<LedgerInfo>): Promise<IPagination<LedgerInfo>> {
         let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerInfo>>(`api/ledger/infos`, { data })
+            new TransportHttpCommandAsync<IPagination<LedgerInfo>>(INFOS_URL, { data })
         );
         items.items = items.items.map(item => LedgerInfo.toClass(item));
         return items;
@@ -128,7 +128,7 @@ export class LedgerApiClient extends Destroyable {
 
     public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(`api/ledger/block`, {
+            new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(BLOCK_URL, {
                 data: { hashOrNumber, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
@@ -139,7 +139,7 @@ export class LedgerApiClient extends Destroyable {
         this.checkPaginable(data, ledgerName);
 
         let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlock>>(`api/ledger/blocks`, { data })
+            new TransportHttpCommandAsync<IPagination<LedgerBlock>>(BLOCKS_URL, { data })
         );
         items.items = TransformUtil.toClassMany(LedgerBlock, items.items);
         return items;
@@ -147,7 +147,7 @@ export class LedgerApiClient extends Destroyable {
 
     public async getTransaction(hash: string, ledgerName?: string): Promise<LedgerBlockTransaction> {
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest>(`api/ledger/transaction`, {
+            new TransportHttpCommandAsync<ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest>(TRANSACTION_URL, {
                 data: { hash, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
@@ -158,7 +158,7 @@ export class LedgerApiClient extends Destroyable {
         this.checkPaginable(data, ledgerName);
 
         let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlockTransaction>>(`api/ledger/transactions`, { data })
+            new TransportHttpCommandAsync<IPagination<LedgerBlockTransaction>>(TRANSACTIONS_URL, { data })
         );
         items.items = TransformUtil.toClassMany(LedgerBlockTransaction, items.items);
         return items;
@@ -166,7 +166,7 @@ export class LedgerApiClient extends Destroyable {
 
     public async getEvent(uid: string, ledgerName?: string): Promise<LedgerBlockEvent> {
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest>(`api/ledger/event`, {
+            new TransportHttpCommandAsync<ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest>(EVENT_URL, {
                 data: { uid, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
@@ -177,7 +177,7 @@ export class LedgerApiClient extends Destroyable {
         this.checkPaginable(data, ledgerName);
 
         let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlockEvent>>(`api/ledger/events`, { data })
+            new TransportHttpCommandAsync<IPagination<LedgerBlockEvent>>(EVENTS_URL, { data })
         );
         items.items = TransformUtil.toClassMany(LedgerBlockEvent, items.items);
         return items;
@@ -185,7 +185,7 @@ export class LedgerApiClient extends Destroyable {
 
     public async reset(password: string, ledgerName?: string): Promise<void> {
         await this.http.sendListen(
-            new TransportHttpCommandAsync<void, ILedgerResetRequest>('api/ledger/reset', {
+            new TransportHttpCommandAsync<void, ILedgerResetRequest>(RESET_URL, {
                 data: { password, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
@@ -193,7 +193,7 @@ export class LedgerApiClient extends Destroyable {
 
     public async search(query: string, ledgerName?: string): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
         let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>('api/ledger/search', {
+            new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>(SEARCH_URL, {
                 data: { query, ledgerName: this.getLedgerName(ledgerName) }
             })
         );
@@ -223,23 +223,15 @@ export class LedgerApiClient extends Destroyable {
     //--------------------------------------------------------------------------
 
     public get url(): string {
-        return !_.isNil(this.settings) ? this.settings.baseURL : null;
+        return this.http.url;
     }
 
     public set url(value: string) {
-        if (!_.isNil(this.settings)) {
-            this.settings.baseURL = value;
-        }
+        this.http.url = value;
     }
 
     public get settings(): ILedgerApiSettings {
-        return !_.isNil(this.http) ? this.http.settings : null;
-    }
-
-    public set settings(value: ILedgerApiSettings) {
-        if (!_.isNil(this.http)) {
-            this.http.settings = value;
-        }
+        return this.http.settings;
     }
 
     public get http(): TransportHttp {
@@ -250,3 +242,21 @@ export class LedgerApiClient extends Destroyable {
 export interface ILedgerApiSettings extends ITransportHttpSettings {
     defaultLedgerName?: string;
 }
+
+export const PREFIX_URL = 'api/ledger/';
+
+export const EVENT_URL = PREFIX_URL + 'event';
+export const EVENTS_URL = PREFIX_URL + 'events';
+
+export const BLOCK_URL = PREFIX_URL + 'block';
+export const BLOCKS_URL = PREFIX_URL + 'blocks';
+
+export const TRANSACTION_URL = PREFIX_URL + 'transaction';
+export const TRANSACTIONS_URL = PREFIX_URL + 'transactions';
+
+export const INFO_URL = PREFIX_URL + 'info';
+export const INFOS_URL = PREFIX_URL + 'infos';
+
+export const RESET_URL = PREFIX_URL + 'reset';
+export const SEARCH_URL = PREFIX_URL + 'search';
+export const REQUEST_URL = PREFIX_URL + 'request';

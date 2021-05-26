@@ -8,23 +8,12 @@
         "email": "renat.gubaev@gmail.com"
     },
     "license": "ISC",
-    "peerDependencies": {
-        "@ts-core/common": "^1.0.154",
-        "@types/socket.io-client": "1.4.32",
-        "socket.io-client": "2.2.0"
+    "dependencies": {
+        "@ts-core/common": "^1.0.180",
+        "@ts-core/socket": "^1.0.25"
     },
     "devDependencies": {
-        "@types/node": "12.12.18",
-        "gulp": "4.0.2",
-        "gulp-clean": "0.4.0",
-        "gulp-typescript": "5.0.1",
-        "del": "^5.1.0",
-        "gulp-clean-dir": "^1.0.2",
-        "gulp-debug": "^4.0.0",
-        "gulp-run-command": "0.0.10",
-        "prettier": "1.19.1",
-        "typescript": "3.4.5",
-        "ts-node": "8.6.2"
+        "gulp-npm-publisher": "1.0.2"
     },
     "repository": {
         "type": "git",
