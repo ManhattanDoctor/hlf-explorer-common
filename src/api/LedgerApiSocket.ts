@@ -8,7 +8,8 @@ import * as _ from 'lodash';
 import { ITransportEvent } from '@ts-core/common/transport';
 import { Observable, Subject } from 'rxjs';
 import { ILogger } from '@ts-core/common/logger';
-import { SocketClient } from '@ts-core/socket';
+import { ISocketClientBaseSettings, SocketClient } from '@ts-core/socket';
+import { Socket } from 'socket.io-client';
 
 export class LedgerApiSocket extends SocketClient<
     LedgerSocketEvent,
@@ -48,21 +49,21 @@ export class LedgerApiSocket extends SocketClient<
         return !_.isNil(this.ledgerDefault) ? this.ledgerDefault.id === ledgerId : true;
     }
 
-    protected eventListenersAdd(socket: SocketIOClient.Socket): void {
-        socket.addEventListener(LedgerSocketEvent.LEDGER_RESETED, this.proxyLedgerResetedHandler);
-        socket.addEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
-        socket.addEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
-        socket.addEventListener(LedgerSocketEvent.LEDGER_LIST_RECEIVED, this.proxyLedgerListReceivedHandler);
+    protected eventListenersAdd(socket: Socket): void {
+        socket.on(LedgerSocketEvent.LEDGER_RESETED, this.proxyLedgerResetedHandler);
+        socket.on(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
+        socket.on(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
+        socket.on(LedgerSocketEvent.LEDGER_LIST_RECEIVED, this.proxyLedgerListReceivedHandler);
     }
 
-    protected eventListenersRemove(socket: SocketIOClient.Socket): void {
-        socket.removeEventListener(LedgerSocketEvent.LEDGER_RESETED, this.proxyLedgerResetedHandler);
-        socket.removeEventListener(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
-        socket.removeEventListener(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
-        socket.removeEventListener(LedgerSocketEvent.LEDGER_LIST_RECEIVED, this.proxyLedgerListReceivedHandler);
+    protected eventListenersRemove(socket: Socket): void {
+        socket.off(LedgerSocketEvent.LEDGER_RESETED, this.proxyLedgerResetedHandler);
+        socket.off(LedgerSocketEvent.LEDGER_UPDATED, this.proxyLedgerUpdatedHandler);
+        socket.off(LedgerSocketEvent.LEDGER_BLOCK_PARSED, this.proxyLedgerBlockParsed);
+        socket.off(LedgerSocketEvent.LEDGER_LIST_RECEIVED, this.proxyLedgerListReceivedHandler);
     }
 
-    protected createSocket(): SocketIOClient.Socket {
+    protected createSocket(): Socket {
         return io.connect(`${UrlUtil.parseUrl(this.url)}${LEDGER_SOCKET_NAMESPACE}`, this.settings);
     }
 
@@ -220,7 +221,7 @@ export class LedgerApiSocket extends SocketClient<
     }
 }
 
-export interface ILedgerSocketSettings extends SocketIOClient.ConnectOpts {
+export interface ILedgerSocketSettings extends ISocketClientBaseSettings {
     url: string;
     defaultLedgerName?: string;
 }

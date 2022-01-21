@@ -1,6 +1,6 @@
 {
     "name": "@hlf-explorer/common",
-    "version": "1.0.32",
+    "version": "2.0.0",
     "description": "Common classes for HLF Explorer",
     "main": "index.js",
     "author": {
@@ -9,11 +9,12 @@
     },
     "license": "ISC",
     "dependencies": {
-        "@ts-core/common": "^1.0.180",
-        "@ts-core/socket": "^1.0.25"
+        "@ts-core/common": "^2.0.1",
+        "@ts-core/socket": "^2.0.2"
     },
     "devDependencies": {
-        "gulp-npm-publisher": "1.0.2"
+        "@types/node": "^14.14.31",
+        "gulp-npm-publisher": "^2.0.2"
     },
     "repository": {
         "type": "git",
