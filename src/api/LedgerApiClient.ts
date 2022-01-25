@@ -127,11 +127,10 @@ export class LedgerApiClient extends Destroyable {
     }
 
     public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
-        let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(BLOCK_URL, {
-                data: { hashOrNumber, ledgerName: this.getLedgerName(ledgerName) }
-            })
-        );
+        let item = await this.http.call<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(
+            BLOCK_URL, {
+            data: { hashOrNumber, ledgerName: this.getLedgerName(ledgerName) }
+        });
         return TransformUtil.toClass(LedgerBlock, item.value);
     }
 

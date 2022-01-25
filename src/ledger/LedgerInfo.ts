@@ -31,7 +31,7 @@ export class LedgerInfo {
     public name: string;
 
     @Transform(params => TransformUtil.fromClassMany(params.value.collection), { toPlainOnly: true })
-    @Transform(params => new LedgerBlocksLast(TransformUtil.toClassMany(LedgerBlock, params.value.items)), { toClassOnly: true })
+    @Transform(params => new LedgerBlocksLast(TransformUtil.toClassMany(LedgerBlock, params.value)), { toClassOnly: true })
     public blocksLast: LedgerBlocksLast;
 
     @Exclude()
