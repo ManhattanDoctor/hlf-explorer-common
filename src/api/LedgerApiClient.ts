@@ -1,4 +1,4 @@
-import { TransportHttp, TransportHttpCommandAsync, ITransportHttpSettings, TransportHttpCommand } from '@ts-core/common/transport/http';
+import { TransportHttp, ITransportHttpSettings } from '@ts-core/common/transport/http';
 import { ILogger } from '@ts-core/common/logger';
 import { LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../ledger';
 import { ILedgerInfoGetResponse, ILedgerInfoGetRequest } from './info';
@@ -14,17 +14,10 @@ import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions } f
 import { Transport } from '@ts-core/common/transport';
 import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
-import { Destroyable } from '@ts-core/common/Destroyable';
 import { ILedgerResetRequest } from './ILedgerResetRequest';
 
-export class LedgerApiClient extends Destroyable {
-    // --------------------------------------------------------------------------
-    //
-    //  Properties
-    //
-    // --------------------------------------------------------------------------
 
-    protected _http: TransportHttp<ILedgerApiSettings>;
+export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
 
     // --------------------------------------------------------------------------
     //
@@ -33,15 +26,7 @@ export class LedgerApiClient extends Destroyable {
     // --------------------------------------------------------------------------
 
     constructor(logger: ILogger, url?: string, defaultLedgerName?: string) {
-        super();
-        this._http = new TransportHttp(logger, { method: 'get' });
-
-        if (!_.isNil(url)) {
-            this.url = url;
-        }
-        if (!_.isNil(defaultLedgerName)) {
-            this.settings.defaultLedgerName = defaultLedgerName;
-        }
+        super(logger, { method: 'get', baseURL: url, defaultLedgerName });
     }
 
     //--------------------------------------------------------------------------
@@ -67,7 +52,6 @@ export class LedgerApiClient extends Destroyable {
         if (_.isNil(data)) {
             return;
         }
-
         if (_.isNil(data.conditions)) {
             data.conditions = {};
         }
@@ -85,23 +69,20 @@ export class LedgerApiClient extends Destroyable {
     // --------------------------------------------------------------------------
 
     public async requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> {
-        this.http.send(
-            new TransportHttpCommand<ILedgerRequestRequest<U>>(REQUEST_URL, {
-                data: await this.createRequest(command, options, ledgerName),
-                method: 'post'
-            })
-        );
+        this.call<ILedgerRequestRequest<U>>(
+            REQUEST_URL, {
+            data: await this.createRequest(command, options, ledgerName),
+            method: 'post'
+        });
     }
 
     public async requestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerName?: string): Promise<V> {
         command.response(
-            await this.http.sendListen(
-                new TransportHttpCommandAsync<V, ILedgerRequestRequest<U>>(REQUEST_URL, {
-                    data: await this.createRequest(command, options, ledgerName),
-                    method: 'post'
-                })
-            )
-        );
+            await this.call<V, ILedgerRequestRequest<U>>(
+                REQUEST_URL, {
+                data: await this.createRequest(command, options, ledgerName),
+                method: 'post'
+            }));
         return command.data;
     }
 
@@ -112,22 +93,18 @@ export class LedgerApiClient extends Destroyable {
     // --------------------------------------------------------------------------
 
     public async getInfo(nameOrId: number | string): Promise<LedgerInfo> {
-        let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerInfoGetResponse, ILedgerInfoGetRequest>(INFO_URL, { data: { nameOrId } })
-        );
+        let item = await this.call<ILedgerInfoGetResponse, ILedgerInfoGetRequest>(INFO_URL, { data: { nameOrId } });
         return LedgerInfo.toClass(item.value);
     }
 
     public async getInfoList(data?: Paginable<LedgerInfo>): Promise<IPagination<LedgerInfo>> {
-        let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerInfo>>(INFOS_URL, { data })
-        );
+        let items = await this.call<IPagination<LedgerInfo>>(INFOS_URL, { data });
         items.items = items.items.map(item => LedgerInfo.toClass(item));
         return items;
     }
 
     public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
-        let item = await this.http.call<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(
+        let item = await this.call<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(
             BLOCK_URL, {
             data: { hashOrNumber, ledgerName: this.getLedgerName(ledgerName) }
         });
@@ -137,65 +114,54 @@ export class LedgerApiClient extends Destroyable {
     public async getBlockList(data?: Paginable<LedgerBlock>, ledgerName?: string): Promise<IPagination<LedgerBlock>> {
         this.checkPaginable(data, ledgerName);
 
-        let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlock>>(BLOCKS_URL, { data })
-        );
+        let items = await this.call<IPagination<LedgerBlock>>(BLOCKS_URL, { data });
         items.items = TransformUtil.toClassMany(LedgerBlock, items.items);
         return items;
     }
 
     public async getTransaction(hash: string, ledgerName?: string): Promise<LedgerBlockTransaction> {
-        let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest>(TRANSACTION_URL, {
-                data: { hash, ledgerName: this.getLedgerName(ledgerName) }
-            })
-        );
+        let item = await this.call<ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest>(TRANSACTION_URL, {
+            data: { hash, ledgerName: this.getLedgerName(ledgerName) }
+        });
         return TransformUtil.toClass(LedgerBlockTransaction, item.value);
     }
 
     public async getTransactionList(data?: Paginable<LedgerBlockTransaction>, ledgerName?: string): Promise<IPagination<LedgerBlockTransaction>> {
         this.checkPaginable(data, ledgerName);
 
-        let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlockTransaction>>(TRANSACTIONS_URL, { data })
-        );
+        let items = await this.call<IPagination<LedgerBlockTransaction>>(TRANSACTIONS_URL, { data });
         items.items = TransformUtil.toClassMany(LedgerBlockTransaction, items.items);
         return items;
     }
 
     public async getEvent(uid: string, ledgerName?: string): Promise<LedgerBlockEvent> {
-        let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest>(EVENT_URL, {
-                data: { uid, ledgerName: this.getLedgerName(ledgerName) }
-            })
-        );
+        let item = await this.call<ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest>(
+            EVENT_URL, {
+            data: { uid, ledgerName: this.getLedgerName(ledgerName) }
+        })
         return TransformUtil.toClass(LedgerBlockEvent, item.value);
     }
 
     public async getEventList(data?: Paginable<LedgerBlockEvent>, ledgerName?: string): Promise<IPagination<LedgerBlockEvent>> {
         this.checkPaginable(data, ledgerName);
 
-        let items = await this.http.sendListen(
-            new TransportHttpCommandAsync<IPagination<LedgerBlockEvent>>(EVENTS_URL, { data })
-        );
+        let items = await this.call<IPagination<LedgerBlockEvent>>(EVENTS_URL, { data });
         items.items = TransformUtil.toClassMany(LedgerBlockEvent, items.items);
         return items;
     }
 
     public async reset(password: string, ledgerName?: string): Promise<void> {
-        await this.http.sendListen(
-            new TransportHttpCommandAsync<void, ILedgerResetRequest>(RESET_URL, {
-                data: { password, ledgerName: this.getLedgerName(ledgerName) }
-            })
-        );
+        await this.call<void, ILedgerResetRequest>(
+            RESET_URL, {
+            data: { password, ledgerName: this.getLedgerName(ledgerName) }
+        })
     }
 
     public async search(query: string, ledgerName?: string): Promise<LedgerBlock | LedgerBlockTransaction | LedgerBlockEvent> {
-        let item = await this.http.sendListen(
-            new TransportHttpCommandAsync<ILedgerSearchResponse, ILedgerSearchRequest>(SEARCH_URL, {
-                data: { query, ledgerName: this.getLedgerName(ledgerName) }
-            })
-        );
+        let item = await this.call<ILedgerSearchResponse, ILedgerSearchRequest>(
+            SEARCH_URL, {
+            data: { query, ledgerName: this.getLedgerName(ledgerName) }
+        })
 
         let classType = null;
         if (LedgerBlock.instanceOf(item.value)) {
@@ -210,32 +176,12 @@ export class LedgerApiClient extends Destroyable {
         return TransformUtil.toClass(classType, item.value);
     }
 
-    public destroy(): void {
-        this._http.destroy();
-        this._http = null;
-    }
-
     //--------------------------------------------------------------------------
     //
     // 	Public Properties
     //
     //--------------------------------------------------------------------------
 
-    public get url(): string {
-        return this.http.url;
-    }
-
-    public set url(value: string) {
-        this.http.url = value;
-    }
-
-    public get settings(): ILedgerApiSettings {
-        return this.http.settings;
-    }
-
-    public get http(): TransportHttp {
-        return this._http;
-    }
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
