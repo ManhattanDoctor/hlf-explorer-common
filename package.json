@@ -1,6 +1,6 @@
 {
     "name": "@hlf-explorer/common",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "description": "Common classes for HLF Explorer",
     "main": "index.js",
     "author": {
