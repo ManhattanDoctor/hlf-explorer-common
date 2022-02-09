@@ -68,7 +68,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     //
     // --------------------------------------------------------------------------
 
-    public async requestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> {
+    public async ledgerRequestSend<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> {
         this.call<ILedgerRequestRequest<U>>(
             REQUEST_URL, {
             data: await this.createRequest(command, options, ledgerName),
@@ -76,7 +76,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         });
     }
 
-    public async requestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerName?: string): Promise<V> {
+    public async ledgerRequestSendListen<U, V>(command: ITransportCommandAsync<U, V>, options?: ITransportCommandOptions, ledgerName?: string): Promise<V> {
         command.response(
             await this.call<V, ILedgerRequestRequest<U>>(
                 REQUEST_URL, {
