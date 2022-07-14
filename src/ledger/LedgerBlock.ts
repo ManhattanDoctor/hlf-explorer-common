@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 import { LedgerBlockEvent } from './LedgerBlockEvent';
-import { ObjectUtil } from '@ts-core/common/util';
+import { ObjectUtil } from '@ts-core/common';
 
 export class LedgerBlock {
     // --------------------------------------------------------------------------

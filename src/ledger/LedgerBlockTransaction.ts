@@ -1,8 +1,8 @@
 import * as _ from 'lodash';
 import { Type } from 'class-transformer';
-import { ObjectUtil } from '@ts-core/common/util';
-import { ITransportCommandOptions } from '@ts-core/common/transport';
-import { ExtendedError } from '@ts-core/common/error';
+import { ObjectUtil } from '@ts-core/common';
+import { ITransportCommandOptions } from '@ts-core/common';
+import { ExtendedError } from '@ts-core/common';
 
 export class LedgerBlockTransaction {
     // --------------------------------------------------------------------------

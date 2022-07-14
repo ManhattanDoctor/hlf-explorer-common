@@ -1,8 +1,6 @@
-import { MapCollection } from '@ts-core/common/map';
+import { MapCollection } from '@ts-core/common';
 import { LedgerBlock } from './LedgerBlock';
-import { Exclude } from 'class-transformer';
 import * as _ from 'lodash';
-import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 
 export class LedgerBlocksLast extends MapCollection<LedgerBlock> {
     // --------------------------------------------------------------------------

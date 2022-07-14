@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import { Type } from 'class-transformer';
-import { ObjectUtil } from '@ts-core/common/util';
-import { ITransportEvent } from '@ts-core/common/transport';
+import { ObjectUtil } from '@ts-core/common';
+import { ITransportEvent } from '@ts-core/common';
 
 export class LedgerBlockEvent<T = any> {
     // --------------------------------------------------------------------------

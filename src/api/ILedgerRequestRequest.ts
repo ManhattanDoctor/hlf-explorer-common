@@ -1,4 +1,4 @@
-import { ITransportCommand, ITransportCommandOptions } from '@ts-core/common/transport';
+import { ITransportCommand, ITransportCommandOptions } from '@ts-core/common';
 
 export interface ILedgerRequestRequest<U = any> {
     request: ITransportCommand<U>;

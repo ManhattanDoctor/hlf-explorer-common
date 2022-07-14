@@ -1,4 +1,4 @@
-import { MapCollection } from '@ts-core/common/map';
+import { MapCollection } from '@ts-core/common';
 import * as _ from 'lodash';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
 

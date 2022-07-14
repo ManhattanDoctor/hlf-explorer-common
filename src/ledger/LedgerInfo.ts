@@ -1,6 +1,6 @@
 import { LedgerBlock } from './LedgerBlock';
 import { Exclude, Transform } from 'class-transformer';
-import { TransformUtil } from '@ts-core/common/util';
+import { TransformUtil } from '@ts-core/common';
 import { LedgerBlocksLast } from './LedgerBlocksLast';
 import { LedgerBlockTransactionsLast } from './LedgerBlockTransactionsLast';
 import * as _ from 'lodash';
