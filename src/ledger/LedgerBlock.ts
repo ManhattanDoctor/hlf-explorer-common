@@ -27,6 +27,9 @@ export class LedgerBlock {
     public number: number;
     public rawData: any;
 
+    public eventsCount: number;
+    public transactionsCount: number;
+
     public isBatch?: boolean;
 
     @Type(() => Date)
