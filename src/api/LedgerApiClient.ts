@@ -24,8 +24,8 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     //
     // --------------------------------------------------------------------------
 
-    constructor(logger: ILogger, url?: string, ledgerName?: string) {
-        super(logger, { method: 'get', baseURL: url, ledgerName });
+    constructor(logger: ILogger, url?: string, ledgerNameDefault?: string) {
+        super(logger, { method: 'get', baseURL: url, ledgerNameDefault });
     }
 
     //--------------------------------------------------------------------------
@@ -58,7 +58,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     }
 
     protected getLedgerName(ledgerName?: string): string {
-        return !_.isNil(ledgerName) ? ledgerName : this.settings.ledgerName;
+        return !_.isNil(ledgerName) ? ledgerName : this.settings.ledgerNameDefault;
     }
 
     // --------------------------------------------------------------------------
@@ -183,7 +183,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
-    ledgerName?: string;
+    ledgerNameDefault?: string;
 }
 
 export const PREFIX_URL = 'api/ledger/';

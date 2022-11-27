@@ -31,8 +31,8 @@ export class LedgerApiSocket extends SocketClient<
     //
     // --------------------------------------------------------------------------
 
-    constructor(protected logger: ILogger, url?: string, defaultLedgerName?: string) {
-        super(logger, { url, defaultLedgerName, reconnectionAttempts: 3 });
+    constructor(protected logger: ILogger, url?: string, ledgerNameDefault?: string) {
+        super(logger, { url, ledgerNameDefault, reconnectionAttempts: 3 });
         this.eventDispatchers = new Map();
     }
 
@@ -143,11 +143,11 @@ export class LedgerApiSocket extends SocketClient<
     protected ledgerListReceivedHandler(items: Array<LedgerInfo>): void {
         this.observer.next(new ObservableData(LedgerSocketEvent.LEDGER_LIST_RECEIVED, items));
 
-        if (_.isNil(this.settings.defaultLedgerName)) {
+        if (_.isNil(this.settings.ledgerNameDefault)) {
             return;
         }
 
-        this._ledgerDefault = _.find(items, { name: this.settings.defaultLedgerName });
+        this._ledgerDefault = _.find(items, { name: this.settings.ledgerNameDefault });
         this.observer.next(
             new ObservableData(
                 !_.isNil(this.ledgerDefault) ? LedgerSocketEvent.LEDGER_DEFAULT_FOUND : LedgerSocketEvent.LEDGER_DEFAULT_NOT_FOUND,
@@ -223,7 +223,7 @@ export class LedgerApiSocket extends SocketClient<
 
 export interface ILedgerSocketSettings extends ISocketClientBaseSettings {
     url: string;
-    defaultLedgerName?: string;
+    ledgerNameDefault?: string;
 }
 
 export const LEDGER_SOCKET_NAMESPACE = `ledger`;
