@@ -16,7 +16,6 @@ import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { ILedgerResetRequest } from './ILedgerResetRequest';
 
-
 export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
 
     // --------------------------------------------------------------------------
@@ -25,8 +24,8 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     //
     // --------------------------------------------------------------------------
 
-    constructor(logger: ILogger, url?: string, defaultLedgerName?: string) {
-        super(logger, { method: 'get', baseURL: url, defaultLedgerName });
+    constructor(logger: ILogger, url?: string, ledgerName?: string) {
+        super(logger, { method: 'get', baseURL: url, ledgerName });
     }
 
     //--------------------------------------------------------------------------
@@ -48,7 +47,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         };
     }
 
-    protected checkPaginable<U>(data: Paginable<U>, ledgerName: string): void {
+    protected checkPaginable<U>(data: Paginable<U>, ledgerName?: string): void {
         if (_.isNil(data)) {
             return;
         }
@@ -59,7 +58,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     }
 
     protected getLedgerName(ledgerName?: string): string {
-        return !_.isNil(ledgerName) ? ledgerName : this.settings.defaultLedgerName;
+        return !_.isNil(ledgerName) ? ledgerName : this.settings.ledgerName;
     }
 
     // --------------------------------------------------------------------------
@@ -184,7 +183,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
-    defaultLedgerName?: string;
+    ledgerName?: string;
 }
 
 export const PREFIX_URL = 'api/ledger/';
