@@ -11,7 +11,7 @@ export class LedgerBlockEvent<T = any> implements ITransportEvent<T> {
     // --------------------------------------------------------------------------
 
     public static instanceOf(data: any): data is LedgerBlockEvent {
-        return ObjectUtil.instanceOf(data, ['name', 'transactionHash']);
+        return ObjectUtil.instanceOf(data, ['name', 'requestId']);
     }
 
     // --------------------------------------------------------------------------
@@ -25,6 +25,7 @@ export class LedgerBlockEvent<T = any> implements ITransportEvent<T> {
 
     public name: string;
     public channel: string;
+    public requestId: string;
     public chaincode: string;
     public blockNumber: number;
     public transactionHash: string;
