@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { ObjectUtil } from '@ts-core/common';
 import { ITransportEvent } from '@ts-core/common';
 
-export class LedgerBlockEvent<T = any> {
+export class LedgerBlockEvent<T = any> implements ITransportEvent<T> {
     // --------------------------------------------------------------------------
     //
     //  Static Methods
@@ -32,5 +32,5 @@ export class LedgerBlockEvent<T = any> {
 
     @Type(() => Date)
     public createdDate: Date;
-    public data?: ITransportEvent<T>;
+    public data?: T;
 }
