@@ -22,8 +22,6 @@ export class LedgerBlockTransaction {
     // --------------------------------------------------------------------------
 
     public id: number;
-    public uid: string;
-
     public hash: string;
     public channel: string;
     public blockNumber: number;
@@ -46,7 +44,6 @@ export class LedgerBlockTransaction {
     public chaincode: ILedgerBlockTransactionChaincode;
 }
 
-// ITransportFabricRequestPayload
 export interface ILedgerBlockTransactionRequestPayload<U = any> {
     id: string;
     name: string;
@@ -55,13 +52,11 @@ export interface ILedgerBlockTransactionRequestPayload<U = any> {
     isNeedReply: boolean;
 }
 
-// ITransportFabricResponsePayload
 export interface ILedgerBlockTransactionResponsePayload<V = any> {
     id: string;
     response?: ExtendedError | V;
 }
 
-// ITransportFabricTransactionChaincode
 export interface ILedgerBlockTransactionChaincode {
     name: string;
     path: string;

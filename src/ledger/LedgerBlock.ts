@@ -11,7 +11,7 @@ export class LedgerBlock {
     // --------------------------------------------------------------------------
 
     public static instanceOf(data: any): data is LedgerBlock {
-        return ObjectUtil.instanceOf(data, ['number', 'hash', 'rawData']);
+        return ObjectUtil.instanceOf(data, ['number', 'hash', 'id']);
     }
 
     // --------------------------------------------------------------------------
@@ -21,8 +21,6 @@ export class LedgerBlock {
     // --------------------------------------------------------------------------
 
     public id: number;
-    public uid: string;
-
     public hash: string;
     public number: number;
     public rawData: any;
