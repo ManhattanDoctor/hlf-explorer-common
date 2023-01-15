@@ -50,6 +50,6 @@ export class LedgerBlockEventsLast extends MapCollection<LedgerBlockEvent> {
     // --------------------------------------------------------------------------
 
     private sortFunction = (first: LedgerBlockEvent, second: LedgerBlockEvent): number => {
-        return first.createdDate.getTime() > second.createdDate.getTime() ? -1 : 1;
+        return first.date.getTime() > second.date.getTime() ? -1 : 1;
     };
 }

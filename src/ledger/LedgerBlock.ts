@@ -24,14 +24,13 @@ export class LedgerBlock {
     public hash: string;
     public number: number;
     public rawData: any;
-
     public eventsCount: number;
     public transactionsCount: number;
 
     public isBatch?: boolean;
 
     @Type(() => Date)
-    public createdDate: Date;
+    public date: Date;
 
     @Type(() => LedgerBlockEvent)
     public events: Array<LedgerBlockEvent>;

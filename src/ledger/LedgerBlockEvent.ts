@@ -32,6 +32,7 @@ export class LedgerBlockEvent<T = any> implements ITransportEvent<T> {
     public transactionValidationCode: number;
 
     @Type(() => Date)
-    public createdDate: Date;
+    public date: Date;
+    
     public data?: T;
 }

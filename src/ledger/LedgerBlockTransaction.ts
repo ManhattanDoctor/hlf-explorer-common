@@ -30,7 +30,7 @@ export class LedgerBlockTransaction {
     public blockMined?: number;
 
     @Type(() => Date)
-    public createdDate: Date;
+    public date: Date;
 
     public requestId: string;
     public requestName: string;
