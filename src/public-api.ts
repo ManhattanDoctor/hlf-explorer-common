@@ -21,3 +21,5 @@ export * from './ledger/LedgerBlockTransaction';
 export * from './ledger/LedgerBlockTransactionsLast';
 export * from './ledger/LedgerBlocksLast';
 export * from './ledger/LedgerInfo';
+//
+export * from './transport/ChaincodeMetaDataGetCommand';
