@@ -16,7 +16,7 @@
     },
     "license": "ISC",
     "dependencies": {
-        "@ts-core/common": "~3.0.3",
+        "@ts-core/common": "~3.0.53",
         "@ts-core/socket": "~3.0.1"
     },
     "devDependencies": {

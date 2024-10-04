@@ -38,7 +38,6 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         if (_.isNil(options)) {
             options = {} as any;
         }
-
         return {
             request: TransformUtil.fromClass(command),
             isAsync: Transport.isCommandAsync(command),

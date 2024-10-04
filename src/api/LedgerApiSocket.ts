@@ -1,15 +1,10 @@
 import { LedgerBlock, LedgerInfo } from '../ledger';
-import { ObjectUtil } from '@ts-core/common';
-import * as io from 'socket.io-client';
-import { ObservableData } from '@ts-core/common';
-import { ExtendedError } from '@ts-core/common';
-import { TransformUtil, UrlUtil } from '@ts-core/common';
-import * as _ from 'lodash';
-import { ITransportEvent } from '@ts-core/common';
+import { ILogger, ITransportEvent, TransformUtil, UrlUtil, ExtendedError, ObservableData, ObjectUtil } from '@ts-core/common';
 import { Observable, Subject } from 'rxjs';
-import { ILogger } from '@ts-core/common';
 import { ISocketClientBaseSettings, SocketClient } from '@ts-core/socket';
 import { Socket } from 'socket.io-client';
+import * as io from 'socket.io-client';
+import * as _ from 'lodash';
 
 export class LedgerApiSocket extends SocketClient<
     LedgerSocketEvent,

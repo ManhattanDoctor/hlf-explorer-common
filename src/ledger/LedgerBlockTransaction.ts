@@ -37,7 +37,7 @@ export class LedgerBlockTransaction {
     public requestUserId: string;
 
     public validationCode: number;
-    public responseErrorCode: number;
+    public responseErrorCode: number | string;
 
     public request: ILedgerBlockTransactionRequestPayload;
     public response: ILedgerBlockTransactionResponsePayload;
