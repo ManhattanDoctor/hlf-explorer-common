@@ -1,7 +1,6 @@
-import * as _ from 'lodash';
 import { Type } from 'class-transformer';
-import { ObjectUtil } from '@ts-core/common';
-import { ITransportEvent } from '@ts-core/common';
+import { ObjectUtil, ITransportEvent } from '@ts-core/common';
+import * as _ from 'lodash';
 
 export class LedgerBlockEvent<T = any> implements ITransportEvent<T> {
     // --------------------------------------------------------------------------
@@ -33,6 +32,6 @@ export class LedgerBlockEvent<T = any> implements ITransportEvent<T> {
 
     @Type(() => Date)
     public date: Date;
-    
+
     public data?: T;
 }

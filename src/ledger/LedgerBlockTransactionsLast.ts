@@ -1,6 +1,6 @@
 import { MapCollection } from '@ts-core/common';
-import * as _ from 'lodash';
 import { LedgerBlockTransaction } from './LedgerBlockTransaction';
+import * as _ from 'lodash';
 
 export class LedgerBlockTransactionsLast extends MapCollection<LedgerBlockTransaction> {
     // --------------------------------------------------------------------------
