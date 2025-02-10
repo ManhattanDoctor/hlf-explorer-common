@@ -1,4 +1,4 @@
-import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions ,Transport, TransformUtil, IPagination, Paginable, ExtendedError, ILogger, TransportHttp, ITransportHttpSettings } from '@ts-core/common';
+import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions, Transport, TransformUtil, IPagination, Paginable, ExtendedError, ILogger, TransportHttp, ITransportHttpSettings } from '@ts-core/common';
 import { LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../ledger';
 import { ILedgerInfoGetResponse, ILedgerInfoGetRequest } from './info';
 import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
@@ -32,6 +32,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         if (_.isNil(options)) {
             options = {} as any;
         }
+        await this.sign(command, options, ledgerName);
         return {
             request: TransformUtil.fromClass(command),
             isAsync: Transport.isCommandAsync(command),
@@ -39,6 +40,8 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
             options
         };
     }
+
+    protected async sign<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> { }
 
     protected checkPaginable<U>(data: Paginable<U>, ledgerName?: string): void {
         if (_.isNil(data)) {
