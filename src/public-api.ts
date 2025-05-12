@@ -8,8 +8,8 @@ export * from './api/block/ILedgerBlockGetRequest';
 export * from './api/block/ILedgerBlockGetResponse';
 export * from './api/event/ILedgerBlockEventGetRequest';
 export * from './api/event/ILedgerBlockEventGetResponse';
-export * from './api/info/ILedgerInfoGetRequest';
-export * from './api/info/ILedgerInfoGetResponse';
+export * from './api/ledger/ILedgerGetRequest';
+export * from './api/ledger/ILedgerGetResponse';
 export * from './api/transaction/ILedgerBlockTransactionGetRequest';
 export * from './api/transaction/ILedgerBlockTransactionGetResponse';
 //

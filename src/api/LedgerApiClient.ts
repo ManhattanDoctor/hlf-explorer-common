@@ -1,6 +1,5 @@
-import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions, Transport, TransformUtil, IPagination, Paginable, ExtendedError, ILogger, TransportHttp, ITransportHttpSettings } from '@ts-core/common';
-import { LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../ledger';
-import { ILedgerInfoGetResponse, ILedgerInfoGetRequest } from './info';
+import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions, Transport, TransformUtil, IPagination, ExtendedError, ILogger, TransportHttp, ITransportHttpSettings, IFilterable, IPaginable } from '@ts-core/common';
+import { Ledger, LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../ledger';
 import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
 import { ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest } from './event';
 import { ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest } from './transaction';
@@ -8,6 +7,7 @@ import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { ILedgerResetRequest } from './ILedgerResetRequest';
+import { ILedgerGetRequest, ILedgerGetResponse, } from './ledger';
 import * as _ from 'lodash';
 
 export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
@@ -30,7 +30,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
 
     protected async createRequest<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<ILedgerRequestRequest> {
         if (_.isNil(options)) {
-            options = {} as any;
+            options = {} as ITransportCommandOptions;
         }
         await this.sign(command, options, ledgerName);
         return {
@@ -41,9 +41,9 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         };
     }
 
-    protected async sign<U>(command: ITransportCommand<U>, options?: ITransportCommandOptions, ledgerName?: string): Promise<void> { }
+    protected async sign<U>(command: ITransportCommand<U>, options: ITransportCommandOptions, ledgerName?: string): Promise<void> { }
 
-    protected checkPaginable<U>(data: Paginable<U>, ledgerName?: string): void {
+    protected checkPaginable<U>(data: IPaginable<U>, ledgerName?: string): void {
         if (_.isNil(data)) {
             return;
         }
@@ -86,15 +86,14 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     //
     // --------------------------------------------------------------------------
 
-    public async getInfo(nameOrId: number | string): Promise<LedgerInfo> {
-        let item = await this.call<ILedgerInfoGetResponse, ILedgerInfoGetRequest>(INFO_URL, { data: { nameOrId } });
-        return LedgerInfo.toClass(item.value);
+    public async getLedger(nameOrId: number | string): Promise<Ledger> {
+        let item = await this.call<ILedgerGetResponse, ILedgerGetRequest>(LEDGER_URL, { data: { nameOrId } });
+        return TransformUtil.toClass(Ledger, item.value);
     }
 
-    public async getInfoList(data?: Paginable<LedgerInfo>): Promise<IPagination<LedgerInfo>> {
-        let items = await this.call<IPagination<LedgerInfo>>(INFOS_URL, { data });
-        items.items = items.items.map(item => LedgerInfo.toClass(item));
-        return items;
+    public async getLedgerList(data?: IFilterable<Ledger>): Promise<Array<Ledger>> {
+        let items = await this.call<Array<Ledger>>(LEDGERS_URL, { data });
+        return TransformUtil.toClassMany(Ledger, items);;
     }
 
     public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
@@ -105,7 +104,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         return TransformUtil.toClass(LedgerBlock, item.value);
     }
 
-    public async getBlockList(data?: Paginable<LedgerBlock>, ledgerName?: string): Promise<IPagination<LedgerBlock>> {
+    public async getBlockList(data?: IPaginable<LedgerBlock>, ledgerName?: string): Promise<IPagination<LedgerBlock>> {
         this.checkPaginable(data, ledgerName);
 
         let items = await this.call<IPagination<LedgerBlock>>(BLOCKS_URL, { data });
@@ -120,7 +119,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         return TransformUtil.toClass(LedgerBlockTransaction, item.value);
     }
 
-    public async getTransactionList(data?: Paginable<LedgerBlockTransaction>, ledgerName?: string): Promise<IPagination<LedgerBlockTransaction>> {
+    public async getTransactionList(data?: IPaginable<LedgerBlockTransaction>, ledgerName?: string): Promise<IPagination<LedgerBlockTransaction>> {
         this.checkPaginable(data, ledgerName);
 
         let items = await this.call<IPagination<LedgerBlockTransaction>>(TRANSACTIONS_URL, { data });
@@ -136,7 +135,7 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         return TransformUtil.toClass(LedgerBlockEvent, item.value);
     }
 
-    public async getEventList(data?: Paginable<LedgerBlockEvent>, ledgerName?: string): Promise<IPagination<LedgerBlockEvent>> {
+    public async getEventList(data?: IPaginable<LedgerBlockEvent>, ledgerName?: string): Promise<IPagination<LedgerBlockEvent>> {
         this.checkPaginable(data, ledgerName);
 
         let items = await this.call<IPagination<LedgerBlockEvent>>(EVENTS_URL, { data });
@@ -169,13 +168,6 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         }
         return TransformUtil.toClass(classType, item.value);
     }
-
-    //--------------------------------------------------------------------------
-    //
-    // 	Public Properties
-    //
-    //--------------------------------------------------------------------------
-
 }
 
 export interface ILedgerApiSettings extends ITransportHttpSettings {
@@ -193,8 +185,8 @@ export const BLOCKS_URL = PREFIX_URL + 'blocks';
 export const TRANSACTION_URL = PREFIX_URL + 'transaction';
 export const TRANSACTIONS_URL = PREFIX_URL + 'transactions';
 
-export const INFO_URL = PREFIX_URL + 'info';
-export const INFOS_URL = PREFIX_URL + 'infos';
+export const LEDGER_URL = PREFIX_URL + 'ledger';
+export const LEDGERS_URL = PREFIX_URL + 'ledgers';
 
 export const RESET_URL = PREFIX_URL + 'reset';
 export const SEARCH_URL = PREFIX_URL + 'search';
