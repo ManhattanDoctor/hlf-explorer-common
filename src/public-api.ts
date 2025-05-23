@@ -6,12 +6,12 @@ export * from './api/LedgerApiClient';
 export * from './api/LedgerApiSocket';
 export * from './api/block/ILedgerBlockGetRequest';
 export * from './api/block/ILedgerBlockGetResponse';
+export * from './api/block/ILedgerBlockLastGetRequest';
+export * from './api/block/ILedgerBlockLastGetResponse';
 export * from './api/event/ILedgerBlockEventGetRequest';
 export * from './api/event/ILedgerBlockEventGetResponse';
 export * from './api/ledger/ILedgerGetRequest';
 export * from './api/ledger/ILedgerGetResponse';
-export * from './api/ledger/ILedgerLastBlockGetRequest';
-export * from './api/ledger/ILedgerLastBlockGetResponse';
 export * from './api/transaction/ILedgerBlockTransactionGetRequest';
 export * from './api/transaction/ILedgerBlockTransactionGetResponse';
 //

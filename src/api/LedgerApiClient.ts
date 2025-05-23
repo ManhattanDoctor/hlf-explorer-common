@@ -1,13 +1,13 @@
 import { ITransportCommand, ITransportCommandAsync, ITransportCommandOptions, Transport, TransformUtil, IPagination, ExtendedError, ILogger, TransportHttp, ITransportHttpSettings, IFilterable, IPaginable } from '@ts-core/common';
-import { Ledger, LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction, LedgerInfo } from '../ledger';
-import { ILedgerBlockGetResponse, ILedgerBlockGetRequest } from './block';
+import { Ledger, LedgerBlock, LedgerBlockEvent, LedgerBlockTransaction } from '../ledger';
+import { ILedgerBlockGetResponse, ILedgerBlockGetRequest, ILedgerBlockLastGetRequest, ILedgerBlockLastGetResponse } from './block';
 import { ILedgerBlockEventGetResponse, ILedgerBlockEventGetRequest } from './event';
 import { ILedgerBlockTransactionGetResponse, ILedgerBlockTransactionGetRequest } from './transaction';
 import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { ILedgerResetRequest } from './ILedgerResetRequest';
-import { ILedgerGetRequest, ILedgerGetResponse, ILedgerLastBlockGetRequest, ILedgerLastBlockGetResponse, } from './ledger';
+import { ILedgerGetRequest, ILedgerGetResponse } from './ledger';
 import * as _ from 'lodash';
 
 export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
@@ -96,16 +96,16 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
         return TransformUtil.toClassMany(Ledger, items);;
     }
 
-    public async getLedgerLastBlock(nameOrId: number | string): Promise<LedgerBlock> {
-        let item = await this.call<ILedgerLastBlockGetResponse, ILedgerLastBlockGetRequest>(LEDGER_URL, { data: { nameOrId } });
-        return TransformUtil.toClass(LedgerBlock, item.value);
-    }
-
     public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
         let item = await this.call<ILedgerBlockGetResponse, ILedgerBlockGetRequest>(
             BLOCK_URL, {
             data: { hashOrNumber, ledgerName: this.getLedgerName(ledgerName) }
         });
+        return TransformUtil.toClass(LedgerBlock, item.value);
+    }
+
+    public async getBlockLast(nameOrId: number | string): Promise<LedgerBlock> {
+        let item = await this.call<ILedgerBlockLastGetResponse, ILedgerBlockLastGetRequest>(BLOCK_LAST_URL, { data: { nameOrId } });
         return TransformUtil.toClass(LedgerBlock, item.value);
     }
 
@@ -185,13 +185,13 @@ export const EVENT_URL = PREFIX_URL + 'event';
 export const EVENTS_URL = PREFIX_URL + 'events';
 
 export const BLOCK_URL = PREFIX_URL + 'block';
+export const BLOCK_LAST_URL = PREFIX_URL + 'blockLast';
 export const BLOCKS_URL = PREFIX_URL + 'blocks';
 
 export const TRANSACTION_URL = PREFIX_URL + 'transaction';
 export const TRANSACTIONS_URL = PREFIX_URL + 'transactions';
 
 export const LEDGER_URL = PREFIX_URL + 'ledger';
-export const LEDGER_LAST_BLOCK_URL = PREFIX_URL + 'ledgerLastBlock';
 export const LEDGERS_URL = PREFIX_URL + 'ledgers';
 
 export const RESET_URL = PREFIX_URL + 'reset';
