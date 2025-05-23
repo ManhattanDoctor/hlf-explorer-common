@@ -7,7 +7,7 @@ import { ILedgerSearchResponse } from './ILedgerSearchResponse';
 import { ILedgerRequestRequest } from './ILedgerRequestRequest';
 import { ILedgerSearchRequest } from './ILedgerSearchRequest';
 import { ILedgerResetRequest } from './ILedgerResetRequest';
-import { ILedgerGetRequest, ILedgerGetResponse, } from './ledger';
+import { ILedgerGetRequest, ILedgerGetResponse, ILedgerLastBlockGetRequest, ILedgerLastBlockGetResponse, } from './ledger';
 import * as _ from 'lodash';
 
 export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
@@ -94,6 +94,11 @@ export class LedgerApiClient extends TransportHttp<ILedgerApiSettings> {
     public async getLedgerList(data?: IFilterable<Ledger>): Promise<Array<Ledger>> {
         let items = await this.call<Array<Ledger>>(LEDGERS_URL, { data });
         return TransformUtil.toClassMany(Ledger, items);;
+    }
+
+    public async getLedgerLastBlock(nameOrId: number | string): Promise<LedgerBlock> {
+        let item = await this.call<ILedgerLastBlockGetResponse, ILedgerLastBlockGetRequest>(LEDGER_URL, { data: { nameOrId } });
+        return TransformUtil.toClass(LedgerBlock, item.value);
     }
 
     public async getBlock(hashOrNumber: number | string, ledgerName?: string): Promise<LedgerBlock> {
@@ -186,6 +191,7 @@ export const TRANSACTION_URL = PREFIX_URL + 'transaction';
 export const TRANSACTIONS_URL = PREFIX_URL + 'transactions';
 
 export const LEDGER_URL = PREFIX_URL + 'ledger';
+export const LEDGER_LAST_BLOCK_URL = PREFIX_URL + 'ledgerLastBlock';
 export const LEDGERS_URL = PREFIX_URL + 'ledgers';
 
 export const RESET_URL = PREFIX_URL + 'reset';
